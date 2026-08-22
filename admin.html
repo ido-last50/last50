@@ -2,11 +2,19 @@
 <html lang="he">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
   <title>Last50 Admin</title>
 
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
+
     * {
       box-sizing: border-box;
     }
@@ -70,6 +78,10 @@
       cursor: pointer;
     }
 
+    button:disabled {
+      opacity: 0.5;
+    }
+
     #preview {
       display: none;
       width: 100%;
@@ -97,8 +109,20 @@
     .error {
       color: #ff6666;
     }
+
+    .routeBox {
+      margin-top: 20px;
+      padding: 15px;
+      background: #252525;
+      border-radius: 10px;
+      direction: ltr;
+      text-align: left;
+      word-break: break-all;
+    }
+
   </style>
 </head>
+
 
 <body>
 
@@ -107,11 +131,16 @@
   <h1>Last50</h1>
   <h2>Admin</h2>
 
+
+  <!-- DESTINATION -->
+
   <div class="section">
 
     <h3>1. יעד</h3>
 
-    <label>שם היעד</label>
+    <label>
+      שם היעד
+    </label>
 
     <input
       id="routeName"
@@ -119,7 +148,10 @@
       placeholder="לדוגמה: חדר שרתים"
     >
 
-    <label>שם נקודת ההתחלה</label>
+
+    <label>
+      שם נקודת ההתחלה
+    </label>
 
     <input
       id="markerName"
@@ -129,9 +161,14 @@
 
   </div>
 
+
+  <!-- MARKER -->
+
   <div class="section">
 
-    <h3>2. תמונת Marker</h3>
+    <h3>
+      2. תמונת Marker
+    </h3>
 
     <p>
       צלם את המקום שממנו הניווט מתחיל.
@@ -150,7 +187,7 @@
       type="button"
       id="markerButton"
     >
-      שמור תמונת Marker
+      אשר תמונת Marker
     </button>
 
     <div id="status">
@@ -159,11 +196,19 @@
 
   </div>
 
+
+  <!-- NAVIGATION -->
+
   <div class="section">
 
-    <h3>3. הוראת ניווט ראשונה</h3>
+    <h3>
+      3. הוראת ניווט ראשונה
+    </h3>
 
-    <label>כיוון</label>
+
+    <label>
+      כיוון
+    </label>
 
     <select id="direction">
 
@@ -193,7 +238,10 @@
 
     </select>
 
-    <label>טקסט שיופיע למשתמש</label>
+
+    <label>
+      טקסט שיופיע למשתמש
+    </label>
 
     <textarea
       id="instruction"
@@ -202,18 +250,45 @@
 
   </div>
 
+
+  <!-- SAVE -->
+
   <button
     type="button"
     id="saveButton"
   >
-    שמור את הניווט
+    שמור מסלול בענן
   </button>
+
 
   <div id="saveStatus"></div>
 
 </div>
 
+
 <script>
+
+/* =========================================
+   SUPABASE
+========================================= */
+
+const SUPABASE_URL =
+  "https://batvowvhsqyvacigmzyv.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_eq-i5YF30iQ03ntmqcg_hA_AJy5NJvK";
+
+
+const supabaseClient =
+  supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+
+/* =========================================
+   ELEMENTS
+========================================= */
 
 const imageInput =
   document.getElementById("imageInput");
@@ -233,13 +308,15 @@ const saveButton =
 const saveStatus =
   document.getElementById("saveStatus");
 
+
 let selectedFile = null;
-let markerImageData = null;
+
+let markerReady = false;
 
 
-/* ---------------------------
-   בחירת / צילום תמונה
----------------------------- */
+/* =========================================
+   TAKE / SELECT PHOTO
+========================================= */
 
 imageInput.addEventListener(
   "change",
@@ -248,14 +325,21 @@ imageInput.addEventListener(
     selectedFile =
       event.target.files[0];
 
+    markerReady = false;
+
+    saveButton.style.display =
+      "none";
+
     if (!selectedFile) {
       return;
     }
+
 
     const imageURL =
       URL.createObjectURL(
         selectedFile
       );
+
 
     preview.src =
       imageURL;
@@ -263,17 +347,19 @@ imageInput.addEventListener(
     preview.style.display =
       "block";
 
+
     status.className = "";
 
     status.innerText =
-      "התמונה מוכנה לשמירה";
+      "התמונה מוכנה";
+
   }
 );
 
 
-/* ---------------------------
-   שמירת תמונת Marker
----------------------------- */
+/* =========================================
+   CONFIRM MARKER
+========================================= */
 
 markerButton.addEventListener(
   "click",
@@ -288,77 +374,75 @@ markerButton.addEventListener(
       return;
     }
 
-    status.className = "";
+
+    markerReady = true;
+
+
+    status.className =
+      "success";
+
 
     status.innerText =
-      "שומר תמונת Marker...";
+      "✅ תמונת Marker מוכנה";
 
-    const reader =
-      new FileReader();
 
-    reader.onload =
-      function(event) {
+    saveButton.style.display =
+      "block";
 
-        markerImageData =
-          event.target.result;
-
-        try {
-
-          localStorage.setItem(
-            "last50_marker_image",
-            markerImageData
-          );
-
-          status.className =
-            "success";
-
-          status.innerText =
-            "✅ תמונת Marker נשמרה";
-
-          saveButton.style.display =
-            "block";
-        }
-
-        catch(error) {
-
-          console.error(error);
-
-          alert(
-            error.name + ": " + error.message
-          );
-
-          status.className =
-            "error";
-
-          status.innerText =
-            "❌ התמונה גדולה מדי לשמירה";
-        }
-      };
-
-    reader.onerror =
-      function() {
-
-        status.className =
-          "error";
-
-        status.innerText =
-          "❌ שגיאה בקריאת התמונה";
-      };
-
-    reader.readAsDataURL(
-      selectedFile
-    );
   }
 );
 
 
-/* ---------------------------
-   שמירת המסלול
----------------------------- */
+/* =========================================
+   FILE EXTENSION
+========================================= */
+
+function getFileExtension(file) {
+
+  if (
+    file.name &&
+    file.name.includes(".")
+  ) {
+
+    return file.name
+      .split(".")
+      .pop()
+      .toLowerCase();
+
+  }
+
+
+  if (
+    file.type === "image/png"
+  ) {
+
+    return "png";
+
+  }
+
+
+  if (
+    file.type === "image/heic"
+  ) {
+
+    return "heic";
+
+  }
+
+
+  return "jpg";
+
+}
+
+
+/* =========================================
+   SAVE ROUTE TO SUPABASE
+========================================= */
 
 saveButton.addEventListener(
   "click",
-  function() {
+  async function() {
+
 
     const routeName =
       document
@@ -366,22 +450,28 @@ saveButton.addEventListener(
         .value
         .trim();
 
+
     const markerName =
       document
         .getElementById("markerName")
         .value
         .trim();
 
+
     const direction =
       document
         .getElementById("direction")
         .value;
+
 
     const instruction =
       document
         .getElementById("instruction")
         .value
         .trim();
+
+
+    /* VALIDATION */
 
     if (!routeName) {
 
@@ -392,6 +482,7 @@ saveButton.addEventListener(
       return;
     }
 
+
     if (!markerName) {
 
       alert(
@@ -401,61 +492,260 @@ saveButton.addEventListener(
       return;
     }
 
-    if (!markerImageData) {
+
+    if (!markerReady) {
 
       alert(
-        "קודם שמור תמונת Marker"
+        "קודם אשר את תמונת ה-Marker"
       );
 
       return;
     }
 
-    const route = {
-
-      id:
-        Date.now().toString(),
-
-      name:
-        routeName,
-
-      markerName:
-        markerName,
-
-      markerStorageKey:
-        "last50_marker_image",
-
-      direction:
-        direction,
-
-      instruction:
-        instruction,
-
-      createdAt:
-        new Date().toISOString()
-    };
 
     try {
 
-      localStorage.setItem(
-        "last50_route",
-        JSON.stringify(route)
+
+      saveButton.disabled =
+        true;
+
+
+      saveStatus.className = "";
+
+
+      saveStatus.innerText =
+        "מעלה את תמונת ה-Marker...";
+
+
+      /* ==========================
+         UNIQUE FILE NAME
+      ========================== */
+
+
+      const extension =
+        getFileExtension(
+          selectedFile
+        );
+
+
+      const fileName =
+        "marker_"
+        +
+        Date.now()
+        +
+        "_"
+        +
+        Math.random()
+          .toString(36)
+          .substring(2, 8)
+        +
+        "."
+        +
+        extension;
+
+
+      /* ==========================
+         UPLOAD IMAGE
+      ========================== */
+
+
+      const {
+        data: uploadData,
+        error: uploadError
+      } =
+        await supabaseClient
+          .storage
+          .from("markers")
+          .upload(
+            fileName,
+            selectedFile,
+            {
+              cacheControl: "3600",
+              upsert: false,
+              contentType:
+                selectedFile.type
+                ||
+                "image/jpeg"
+            }
+          );
+
+
+      if (uploadError) {
+
+        throw new Error(
+          "Storage: "
+          +
+          uploadError.message
+        );
+
+      }
+
+
+      /* ==========================
+         GET PUBLIC URL
+      ========================== */
+
+
+      const {
+        data: publicUrlData
+      } =
+        supabaseClient
+          .storage
+          .from("markers")
+          .getPublicUrl(
+            uploadData.path
+          );
+
+
+      const markerUrl =
+        publicUrlData.publicUrl;
+
+
+      if (!markerUrl) {
+
+        throw new Error(
+          "לא התקבלה כתובת לתמונה"
+        );
+
+      }
+
+
+      saveStatus.innerText =
+        "שומר את המסלול...";
+
+
+      /* ==========================
+         INSERT ROUTE
+      ========================== */
+
+
+      const {
+        data: routeData,
+        error: routeError
+      } =
+        await supabaseClient
+          .from("routes")
+          .insert({
+
+            name:
+              routeName,
+
+            marker_name:
+              markerName,
+
+            direction:
+              direction,
+
+            instruction:
+              instruction,
+
+            marker_url:
+              markerUrl
+
+          })
+          .select()
+          .single();
+
+
+      if (routeError) {
+
+        throw new Error(
+          "Database: "
+          +
+          routeError.message
+        );
+
+      }
+
+
+      /* ==========================
+         SUCCESS
+      ========================== */
+
+
+      const routeId =
+        routeData.id;
+
+
+      const userUrl =
+        "https://ido-last50.github.io/last50/?id="
+        +
+        routeId;
+
+
+      saveStatus.className =
+        "success";
+
+
+      saveStatus.innerHTML = `
+
+        <p>
+          ✅ המסלול נשמר בענן
+        </p>
+
+        <div class="routeBox">
+
+          <strong>
+            Route ID:
+          </strong>
+
+          ${routeId}
+
+          <br><br>
+
+          <strong>
+            User URL:
+          </strong>
+
+          <br>
+
+          ${userUrl}
+
+        </div>
+
+      `;
+
+
+      console.log(
+        "Saved route:",
+        routeData
       );
 
-      saveStatus.innerHTML =
-        "<p class='success'>✅ הניווט נשמר</p>";
+
     }
 
     catch(error) {
 
-      console.error(error);
 
-      alert(
-        error.name + ": " + error.message
+      console.error(
+        error
       );
 
-      saveStatus.innerHTML =
-        "<p class='error'>❌ לא ניתן לשמור את המסלול</p>";
+
+      saveStatus.className =
+        "error";
+
+
+      saveStatus.innerText =
+        "❌ "
+        +
+        error.message;
+
+
+      alert(
+        error.message
+      );
+
     }
+
+    finally {
+
+
+      saveButton.disabled =
+        false;
+
+    }
+
   }
 );
 
