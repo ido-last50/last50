@@ -4,87 +4,212 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Last50 - Create Marker</title>
-<script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <title>Last50 Admin</title>
+
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
-    body {
-      margin: 0;
-      padding: 24px;
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: white;
-      text-align: center;
-    }
-
-    h1 {
-      margin-bottom: 10px;
-    }
-
-    input,
-    button {
-      width: 100%;
-      max-width: 360px;
-      padding: 15px;
-      margin-top: 15px;
-      font-size: 17px;
+    * {
       box-sizing: border-box;
     }
 
+    body {
+      margin: 0;
+      padding: 25px;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      direction: rtl;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 5px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #aaa;
+      margin-top: 0;
+    }
+
+    .section {
+      margin-top: 30px;
+      padding: 20px;
+      background: #1d1d1d;
+      border-radius: 15px;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      margin-bottom: 6px;
+    }
+
+    input,
+    select,
+    textarea,
     button {
+      width: 100%;
+      padding: 14px;
+      font-size: 17px;
+      border-radius: 8px;
+      border: none;
+    }
+
+    textarea {
+      min-height: 90px;
+    }
+
+    button {
+      margin-top: 18px;
+      font-weight: bold;
       cursor: pointer;
     }
 
     #preview {
       display: none;
       width: 100%;
-      max-width: 360px;
-      margin: 20px auto;
-      border-radius: 10px;
+      margin-top: 15px;
+      border-radius: 12px;
     }
 
     #status {
-      margin-top: 20px;
-      font-size: 18px;
+      text-align: center;
+      margin-top: 15px;
+      font-size: 17px;
     }
 
-    #downloadButton {
+    #saveButton {
       display: none;
+      background: #4CAF50;
+      color: white;
+    }
+
+    .success {
+      color: #66ff80;
     }
   </style>
 </head>
 
 <body>
 
+<div class="container">
+
   <h1>Last50</h1>
+  <h2>Admin</h2>
 
-  <h2>Create Marker</h2>
 
-  <p>
-    צלם או בחר תמונה שתשמש כ-Marker
-  </p>
+  <div class="section">
 
-  <input
-    id="imageInput"
-    type="file"
-    accept="image/*"
-    capture="environment"
-  >
+    <h3>1. יעד</h3>
 
-  <img id="preview">
+    <label>שם היעד</label>
 
-  <button id="compileButton">
-    CREATE TARGET
-  </button>
+    <input
+      id="routeName"
+      type="text"
+      placeholder="לדוגמה: חדר שרתים"
+    >
 
-  <div id="status">
-    Waiting for image...
+    <label>שם נקודת ההתחלה</label>
+
+    <input
+      id="markerName"
+      type="text"
+      placeholder="לדוגמה: כניסה למשרד"
+    >
+
   </div>
 
-  <button id="downloadButton">
-    DOWNLOAD targets.mind
+
+  <div class="section">
+
+    <h3>2. Marker</h3>
+
+    <p>
+      צלם את המקום שממנו הניווט מתחיל.
+    </p>
+
+    <input
+      id="imageInput"
+      type="file"
+      accept="image/*"
+      capture="environment"
+    >
+
+    <img id="preview">
+
+    <button id="compileButton">
+      צור Marker
+    </button>
+
+    <div id="status">
+      ממתין לתמונה...
+    </div>
+
+  </div>
+
+
+  <div class="section">
+
+    <h3>3. הוראת ניווט ראשונה</h3>
+
+    <label>כיוון</label>
+
+    <select id="direction">
+
+      <option value="straight">
+        ⬆️ ישר
+      </option>
+
+      <option value="left">
+        ⬅️ שמאלה
+      </option>
+
+      <option value="right">
+        ➡️ ימינה
+      </option>
+
+      <option value="elevator">
+        🛗 מעלית
+      </option>
+
+      <option value="stairs">
+        🪜 מדרגות
+      </option>
+
+      <option value="destination">
+        ⭐ יעד
+      </option>
+
+    </select>
+
+
+    <label>טקסט שיופיע למשתמש</label>
+
+    <textarea
+      id="instruction"
+      placeholder="לדוגמה: המשך ישר 10 מטר ואז פנה ימינה"
+    ></textarea>
+
+  </div>
+
+
+  <button id="saveButton">
+    שמור את הניווט
   </button>
+
+  <div id="saveStatus"></div>
+
+</div>
+
 
 <script>
 
@@ -97,71 +222,74 @@ const preview =
 const compileButton =
   document.getElementById("compileButton");
 
-const downloadButton =
-  document.getElementById("downloadButton");
-
 const status =
   document.getElementById("status");
+
+const saveButton =
+  document.getElementById("saveButton");
+
+const saveStatus =
+  document.getElementById("saveStatus");
 
 let selectedFile = null;
 let exportedBuffer = null;
 
 
-/* ----------------------------
-   בחירת / צילום תמונה
------------------------------ */
 
-imageInput.addEventListener("change", function(event) {
+imageInput.addEventListener(
+  "change",
+  function(event) {
 
-  selectedFile = event.target.files[0];
+    selectedFile =
+      event.target.files[0];
 
-  if (!selectedFile) {
-    return;
+    if (!selectedFile) {
+      return;
+    }
+
+    const url =
+      URL.createObjectURL(selectedFile);
+
+    preview.src = url;
+
+    preview.style.display =
+      "block";
+
+    status.innerText =
+      "התמונה מוכנה";
+
   }
-
-  const imageURL =
-    URL.createObjectURL(selectedFile);
-
-  preview.src = imageURL;
-
-  preview.style.display = "block";
-
-  status.innerText =
-    "Image ready";
-
-});
+);
 
 
-/* ----------------------------
-   המרת File ל-HTML Image
------------------------------ */
 
 function loadImage(file) {
 
-  return new Promise((resolve, reject) => {
+  return new Promise(
+    (resolve, reject) => {
 
-    const img = new Image();
+      const image =
+        new Image();
 
-    img.onload = function() {
-      resolve(img);
-    };
+      image.onload =
+        () => resolve(image);
 
-    img.onerror = function() {
-      reject(
-        new Error("Could not load image")
-      );
-    };
+      image.onerror =
+        () => reject(
+          new Error(
+            "לא ניתן לטעון את התמונה"
+          )
+        );
 
-    img.src =
-      URL.createObjectURL(file);
+      image.src =
+        URL.createObjectURL(file);
 
-  });
+    }
+  );
+
 }
 
 
-/* ----------------------------
-   Compiler
------------------------------ */
 
 compileButton.addEventListener(
   "click",
@@ -170,52 +298,62 @@ compileButton.addEventListener(
     if (!selectedFile) {
 
       alert(
-        "Please take or select a photo first"
+        "קודם צלם או בחר תמונה"
       );
 
       return;
+
     }
+
 
     try {
 
-      compileButton.disabled = true;
-
-      downloadButton.style.display =
-        "none";
+      compileButton.disabled =
+        true;
 
       status.innerText =
-        "Preparing image...";
+        "מכין Marker...";
+
 
       const image =
-        await loadImage(selectedFile);
+        await loadImage(
+          selectedFile
+        );
 
-      status.innerText =
-        "Starting compiler...";
-console.log(window.MINDAR);
-console.log(window.MINDAR?.IMAGE);
+
       const compiler =
         new window.MINDAR.IMAGE.Compiler();
 
+
       await compiler.compileImageTargets(
         [image],
+
         function(progress) {
 
           status.innerText =
-            "Compiling: "
-            + progress.toFixed(0)
-            + "%";
+            "Creating Marker: "
+            +
+            progress.toFixed(0)
+            +
+            "%";
 
         }
       );
 
+
       exportedBuffer =
         await compiler.exportData();
 
-      status.innerText =
-        "✅ Marker ready";
 
-      downloadButton.style.display =
-        "inline-block";
+      status.innerHTML =
+        "✅ Marker מוכן";
+
+      status.className =
+        "success";
+
+
+      saveButton.style.display =
+        "block";
 
     }
 
@@ -224,7 +362,7 @@ console.log(window.MINDAR?.IMAGE);
       console.error(error);
 
       status.innerText =
-        "❌ Error creating marker";
+        "❌ שגיאה ביצירת Marker";
 
       alert(error.message);
 
@@ -241,45 +379,116 @@ console.log(window.MINDAR?.IMAGE);
 );
 
 
-/* ----------------------------
-   הורדת targets.mind
------------------------------ */
 
-downloadButton.addEventListener(
+function bufferToBase64(buffer) {
+
+  let binary = "";
+
+  const bytes =
+    new Uint8Array(buffer);
+
+  for (
+    let i = 0;
+    i < bytes.length;
+    i++
+  ) {
+
+    binary +=
+      String.fromCharCode(
+        bytes[i]
+      );
+
+  }
+
+  return btoa(binary);
+
+}
+
+
+
+saveButton.addEventListener(
   "click",
   function() {
 
-    if (!exportedBuffer) {
-      return;
-    }
+    const routeName =
+      document
+        .getElementById("routeName")
+        .value
+        .trim();
 
-    const blob =
-      new Blob(
-        [exportedBuffer],
-        {
-          type:
-            "application/octet-stream"
-        }
+    const markerName =
+      document
+        .getElementById("markerName")
+        .value
+        .trim();
+
+    const direction =
+      document
+        .getElementById("direction")
+        .value;
+
+    const instruction =
+      document
+        .getElementById("instruction")
+        .value
+        .trim();
+
+
+    if (!routeName) {
+
+      alert(
+        "הכנס שם ליעד"
       );
 
-    const url =
-      URL.createObjectURL(blob);
+      return;
 
-    const link =
-      document.createElement("a");
+    }
 
-    link.href = url;
 
-    link.download =
-      "targets.mind";
+    if (!exportedBuffer) {
 
-    document.body.appendChild(link);
+      alert(
+        "צריך ליצור Marker קודם"
+      );
 
-    link.click();
+      return;
 
-    link.remove();
+    }
 
-    URL.revokeObjectURL(url);
+
+    const route = {
+
+      id:
+        Date.now().toString(),
+
+      name:
+        routeName,
+
+      markerName:
+        markerName,
+
+      direction:
+        direction,
+
+      instruction:
+        instruction,
+
+      targetData:
+        bufferToBase64(
+          exportedBuffer
+        )
+
+    };
+
+
+    localStorage.setItem(
+      "last50_route",
+      JSON.stringify(route)
+    );
+
+
+    saveStatus.innerHTML =
+      "<p class='success'>✅ הניווט נשמר</p>";
 
   }
 );
