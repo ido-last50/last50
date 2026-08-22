@@ -6,9 +6,6 @@
 
   <title>Last50 Admin</title>
 
-  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
-
   <style>
     * {
       box-sizing: border-box;
@@ -95,6 +92,10 @@
     .success {
       color: #66ff80;
     }
+
+    .error {
+      color: #ff6666;
+    }
   </style>
 </head>
 
@@ -104,7 +105,6 @@
 
   <h1>Last50</h1>
   <h2>Admin</h2>
-
 
   <div class="section">
 
@@ -131,7 +131,7 @@
 
   <div class="section">
 
-    <h3>2. Marker</h3>
+    <h3>2. תמונת Marker</h3>
 
     <p>
       צלם את המקום שממנו הניווט מתחיל.
@@ -146,8 +146,11 @@
 
     <img id="preview">
 
-    <<button type="button" id="compileButton">
-      צור Marker
+    <button
+      type="button"
+      id="markerButton"
+    >
+      שמור תמונת Marker
     </button>
 
     <div id="status">
@@ -191,7 +194,6 @@
 
     </select>
 
-
     <label>טקסט שיופיע למשתמש</label>
 
     <textarea
@@ -202,7 +204,10 @@
   </div>
 
 
-  <button id="saveButton">
+  <button
+    type="button"
+    id="saveButton"
+  >
     שמור את הניווט
   </button>
 
@@ -219,8 +224,8 @@ const imageInput =
 const preview =
   document.getElementById("preview");
 
-const compileButton =
-  document.getElementById("compileButton");
+const markerButton =
+  document.getElementById("markerButton");
 
 const status =
   document.getElementById("status");
@@ -231,10 +236,15 @@ const saveButton =
 const saveStatus =
   document.getElementById("saveStatus");
 
+
 let selectedFile = null;
-let exportedBuffer = null;
+
+let markerImageData = null;
 
 
+/* ---------------------------
+   בחירת / צילום תמונה
+---------------------------- */
 
 imageInput.addEventListener(
   "change",
@@ -247,99 +257,33 @@ imageInput.addEventListener(
       return;
     }
 
-    const url =
-      URL.createObjectURL(selectedFile);
+    const imageURL =
+      URL.createObjectURL(
+        selectedFile
+      );
 
-    preview.src = url;
+    preview.src =
+      imageURL;
 
     preview.style.display =
       "block";
 
+    status.className = "";
+
     status.innerText =
-      "התמונה מוכנה";
+      "התמונה מוכנה לשמירה";
 
   }
 );
 
 
-function loadImage(file) {
+/* ---------------------------
+   שמירת תמונת Marker
+---------------------------- */
 
-  return new Promise((resolve, reject) => {
-
-    const img = new Image();
-
-    img.onload = function() {
-
-      const maxWidth = 1200;
-      const maxHeight = 1200;
-
-      let width = img.width;
-      let height = img.height;
-
-      if (width > maxWidth || height > maxHeight) {
-
-        const scale = Math.min(
-          maxWidth / width,
-          maxHeight / height
-        );
-
-        width = Math.round(width * scale);
-        height = Math.round(height * scale);
-      }
-
-      const canvas = document.createElement("canvas");
-
-      canvas.width = width;
-      canvas.height = height;
-
-      const ctx = canvas.getContext("2d");
-
-      ctx.drawImage(
-        img,
-        0,
-        0,
-        width,
-        height
-      );
-
-      const resizedImage = new Image();
-
-      resizedImage.onload = function() {
-        resolve(resizedImage);
-      };
-
-      resizedImage.onerror = function() {
-        reject(
-          new Error("Could not resize image")
-        );
-      };
-
-      resizedImage.src =
-        canvas.toDataURL(
-          "image/jpeg",
-          0.8
-        );
-
-    };
-
-    img.onerror = function() {
-      reject(
-        new Error("Could not load image")
-      );
-    };
-
-    img.src =
-      URL.createObjectURL(file);
-
-  });
-
-}
-
-
-
-compileButton.addEventListener(
+markerButton.addEventListener(
   "click",
-  async function() {
+  function() {
 
     if (!selectedFile) {
 
@@ -348,109 +292,80 @@ compileButton.addEventListener(
       );
 
       return;
-
     }
 
+    status.className = "";
 
-    try {
-
-      compileButton.disabled =
-        true;
-
-      status.innerText =
-        "מכין Marker...";
+    status.innerText =
+      "שומר תמונת Marker...";
 
 
-      const image =
-        await loadImage(
-          selectedFile
-        );
+    const reader =
+      new FileReader();
 
 
-      const compiler =
-        new window.MINDAR.IMAGE.Compiler();
+    reader.onload =
+      function(event) {
 
+        markerImageData =
+          event.target.result;
 
-      await compiler.compileImageTargets(
-        [image],
+        try {
 
-        function(progress) {
+          localStorage.setItem(
+            "last50_marker_image",
+            markerImageData
+          );
+
+          status.className =
+            "success";
 
           status.innerText =
-            "Creating Marker: "
-            +
-            progress.toFixed(0)
-            +
-            "%";
+            "✅ תמונת Marker נשמרה";
+
+          saveButton.style.display =
+            "block";
 
         }
-      );
+
+        catch(error) {
+
+          console.error(error);
+
+          status.className =
+            "error";
+
+          status.innerText =
+            "❌ התמונה גדולה מדי לשמירה";
+
+        }
+
+      };
 
 
-      exportedBuffer =
-        await compiler.exportData();
+    reader.onerror =
+      function() {
+
+        status.className =
+          "error";
+
+        status.innerText =
+          "❌ שגיאה בקריאת התמונה";
+
+      };
 
 
-      status.innerHTML =
-        "✅ Marker מוכן";
-
-      status.className =
-        "success";
-
-
-      saveButton.style.display =
-        "block";
-
-    }
-
-    catch(error) {
-
-      console.error(error);
-
-      status.innerText =
-        "❌ שגיאה ביצירת Marker";
-
-      alert(error.message);
-
-    }
-
-    finally {
-
-      compileButton.disabled =
-        false;
-
-    }
+    reader.readAsDataURL(
+      selectedFile
+    );
 
   }
 );
 
 
-
-function bufferToBase64(buffer) {
-
-  let binary = "";
-
-  const bytes =
-    new Uint8Array(buffer);
-
-  for (
-    let i = 0;
-    i < bytes.length;
-    i++
-  ) {
-
-    binary +=
-      String.fromCharCode(
-        bytes[i]
-      );
-
-  }
-
-  return btoa(binary);
-
-}
-
-
+/* ---------------------------
+   שמירת המסלול
+---------------------------- */
 
 saveButton.addEventListener(
   "click",
@@ -491,10 +406,21 @@ saveButton.addEventListener(
     }
 
 
-    if (!exportedBuffer) {
+    if (!markerName) {
 
       alert(
-        "צריך ליצור Marker קודם"
+        "הכנס שם לנקודת ההתחלה"
+      );
+
+      return;
+
+    }
+
+
+    if (!markerImageData) {
+
+      alert(
+        "קודם שמור תמונת Marker"
       );
 
       return;
@@ -513,28 +439,41 @@ saveButton.addEventListener(
       markerName:
         markerName,
 
+      markerImage:
+        markerImageData,
+
       direction:
         direction,
 
       instruction:
         instruction,
 
-      targetData:
-        bufferToBase64(
-          exportedBuffer
-        )
+      createdAt:
+        new Date().toISOString()
 
     };
 
 
-    localStorage.setItem(
-      "last50_route",
-      JSON.stringify(route)
-    );
+    try {
 
+      localStorage.setItem(
+        "last50_route",
+        JSON.stringify(route)
+      );
 
-    saveStatus.innerHTML =
-      "<p class='success'>✅ הניווט נשמר</p>";
+      saveStatus.innerHTML =
+        "<p class='success'>✅ הניווט נשמר</p>";
+
+    }
+
+    catch(error) {
+
+      console.error(error);
+
+      saveStatus.innerHTML =
+        "<p class='error'>❌ לא ניתן לשמור את המסלול</p>";
+
+    }
 
   }
 );
