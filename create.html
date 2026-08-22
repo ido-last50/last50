@@ -6,7 +6,7 @@
 
   <title>Last50 - Create Marker</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
     body {
@@ -191,7 +191,8 @@ compileButton.addEventListener(
 
       status.innerText =
         "Starting compiler...";
-
+console.log(window.MINDAR);
+console.log(window.MINDAR?.IMAGE);
       const compiler =
         new window.MINDAR.IMAGE.Compiler();
 
