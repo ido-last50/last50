@@ -1,50 +1,315 @@
 <!DOCTYPE html>
-<html>
+<html lang="he">
 <head>
-    <meta charset="UTF-8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+  <title>Last50</title>
 
-    <title>Last50 AR</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- A-Frame -->
-    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-    <!-- MindAR -->
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      direction: rtl;
+    }
 
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-        }
-    </style>
+    .container {
+      max-width: 500px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .card {
+      margin-top: 24px;
+      padding: 20px;
+      background: #1d1d1d;
+      border-radius: 16px;
+    }
+
+    .label {
+      color: #aaa;
+      font-size: 14px;
+      margin-top: 16px;
+    }
+
+    .value {
+      font-size: 21px;
+      margin-top: 5px;
+    }
+
+    #markerImage {
+      width: 100%;
+      margin-top: 18px;
+      border-radius: 14px;
+      display: none;
+    }
+
+    #directionBox {
+      font-size: 60px;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    #instruction {
+      font-size: 22px;
+      text-align: center;
+      line-height: 1.5;
+      margin-top: 15px;
+    }
+
+    #status {
+      text-align: center;
+      margin-top: 30px;
+      color: #aaa;
+    }
+
+    .error {
+      color: #ff6666;
+    }
+
+    .success {
+      color: #66ff80;
+    }
+  </style>
 </head>
 
 <body>
 
-<a-scene
-    mindar-image="imageTargetSrc: ./targets.mind;"
-    vr-mode-ui="enabled: false"
-    device-orientation-permission-ui="enabled: false">
+<div class="container">
 
-    <a-camera
-        position="0 0 0"
-        look-controls="enabled: false">
-    </a-camera>
+  <h1>Last50</h1>
 
-    <a-entity mindar-image-target="targetIndex: 0">
+  <div id="status">
+    טוען מסלול...
+  </div>
 
-        <a-box
-            position="0 0 0.3"
-            scale="0.3 0.3 0.3"
-            color="red">
-        </a-box>
+  <div id="routeContent" style="display:none;">
 
-    </a-entity>
+    <div class="card">
 
-</a-scene>
+      <div class="label">
+        יעד
+      </div>
+
+      <div
+        id="routeName"
+        class="value">
+      </div>
+
+      <div class="label">
+        נקודת התחלה
+      </div>
+
+      <div
+        id="markerName"
+        class="value">
+      </div>
+
+      <img
+        id="markerImage"
+        alt="Marker"
+      >
+
+    </div>
+
+
+    <div class="card">
+
+      <div class="label">
+        הוראת ניווט
+      </div>
+
+      <div id="directionBox">
+      </div>
+
+      <div id="instruction">
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<script>
+
+const SUPABASE_URL =
+  "https://batvowvhsqyvacigmzyv.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_eq-i5YF30iQ03ntmqcg_hA_AJy5NJvK";
+
+const supabaseClient =
+  supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+
+const status =
+  document.getElementById("status");
+
+const routeContent =
+  document.getElementById("routeContent");
+
+const routeName =
+  document.getElementById("routeName");
+
+const markerName =
+  document.getElementById("markerName");
+
+const markerImage =
+  document.getElementById("markerImage");
+
+const directionBox =
+  document.getElementById("directionBox");
+
+const instruction =
+  document.getElementById("instruction");
+
+
+function directionToSymbol(direction) {
+
+  switch(direction) {
+
+    case "straight":
+      return "⬆️";
+
+    case "left":
+      return "⬅️";
+
+    case "right":
+      return "➡️";
+
+    case "elevator":
+      return "🛗";
+
+    case "stairs":
+      return "🪜";
+
+    case "destination":
+      return "⭐";
+
+    default:
+      return "⬆️";
+  }
+}
+
+
+async function loadRoute() {
+
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
+
+  const id =
+    params.get("id");
+
+
+  if (!id) {
+
+    status.className =
+      "error";
+
+    status.innerText =
+      "❌ לא נמצא Route ID בכתובת";
+
+    return;
+  }
+
+
+  try {
+
+    const {
+      data,
+      error
+    } =
+      await supabaseClient
+        .from("routes")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+
+    if (error) {
+
+      throw error;
+    }
+
+
+    routeName.innerText =
+      data.name || "";
+
+    markerName.innerText =
+      data.marker_name || "";
+
+    instruction.innerText =
+      data.instruction || "";
+
+    directionBox.innerText =
+      directionToSymbol(
+        data.direction
+      );
+
+
+    if (data.marker_url) {
+
+      markerImage.src =
+        data.marker_url;
+
+      markerImage.style.display =
+        "block";
+    }
+
+
+    status.className =
+      "success";
+
+    status.innerText =
+      "✅ המסלול נטען";
+
+    routeContent.style.display =
+      "block";
+
+
+    console.log(
+      "Loaded route:",
+      data
+    );
+
+  }
+
+  catch(error) {
+
+    console.error(error);
+
+    status.className =
+      "error";
+
+    status.innerText =
+      "❌ לא ניתן לטעון את המסלול";
+  }
+}
+
+
+loadRoute();
+
+</script>
 
 </body>
 </html>
