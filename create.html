@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Last50 - Create Marker</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    input,
+    button {
+      width: 100%;
+      max-width: 360px;
+      padding: 15px;
+      margin-top: 15px;
+      font-size: 17px;
+      box-sizing: border-box;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    #preview {
+      display: none;
+      width: 100%;
+      max-width: 360px;
+      margin: 20px auto;
+      border-radius: 10px;
+    }
+
+    #status {
+      margin-top: 20px;
+      font-size: 18px;
+    }
+
+    #downloadButton {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Last50</h1>
+
+  <h2>Create Marker</h2>
+
+  <p>
+    צלם או בחר תמונה שתשמש כ-Marker
+  </p>
+
+  <input
+    id="imageInput"
+    type="file"
+    accept="image/*"
+    capture="environment"
+  >
+
+  <img id="preview">
+
+  <button id="compileButton">
+    CREATE TARGET
+  </button>
+
+  <div id="status">
+    Waiting for image...
+  </div>
+
+  <button id="downloadButton">
+    DOWNLOAD targets.mind
+  </button>
+
+<script>
+
+const imageInput =
+  document.getElementById("imageInput");
+
+const preview =
+  document.getElementById("preview");
+
+const compileButton =
+  document.getElementById("compileButton");
+
+const downloadButton =
+  document.getElementById("downloadButton");
+
+const status =
+  document.getElementById("status");
+
+let selectedFile = null;
+let exportedBuffer = null;
+
+
+/* ----------------------------
+   בחירת / צילום תמונה
+----------------------------- */
+
+imageInput.addEventListener("change", function(event) {
+
+  selectedFile = event.target.files[0];
+
+  if (!selectedFile) {
+    return;
+  }
+
+  const imageURL =
+    URL.createObjectURL(selectedFile);
+
+  preview.src = imageURL;
+
+  preview.style.display = "block";
+
+  status.innerText =
+    "Image ready";
+
+});
+
+
+/* ----------------------------
+   המרת File ל-HTML Image
+----------------------------- */
+
+function loadImage(file) {
+
+  return new Promise((resolve, reject) => {
+
+    const img = new Image();
+
+    img.onload = function() {
+      resolve(img);
+    };
+
+    img.onerror = function() {
+      reject(
+        new Error("Could not load image")
+      );
+    };
+
+    img.src =
+      URL.createObjectURL(file);
+
+  });
+}
+
+
+/* ----------------------------
+   Compiler
+----------------------------- */
+
+compileButton.addEventListener(
+  "click",
+  async function() {
+
+    if (!selectedFile) {
+
+      alert(
+        "Please take or select a photo first"
+      );
+
+      return;
+    }
+
+    try {
+
+      compileButton.disabled = true;
+
+      downloadButton.style.display =
+        "none";
+
+      status.innerText =
+        "Preparing image...";
+
+      const image =
+        await loadImage(selectedFile);
+
+      status.innerText =
+        "Starting compiler...";
+
+      const compiler =
+        new window.MINDAR.IMAGE.Compiler();
+
+      await compiler.compileImageTargets(
+        [image],
+        function(progress) {
+
+          status.innerText =
+            "Compiling: "
+            + progress.toFixed(0)
+            + "%";
+
+        }
+      );
+
+      exportedBuffer =
+        await compiler.exportData();
+
+      status.innerText =
+        "✅ Marker ready";
+
+      downloadButton.style.display =
+        "inline-block";
+
+    }
+
+    catch(error) {
+
+      console.error(error);
+
+      status.innerText =
+        "❌ Error creating marker";
+
+      alert(error.message);
+
+    }
+
+    finally {
+
+      compileButton.disabled =
+        false;
+
+    }
+
+  }
+);
+
+
+/* ----------------------------
+   הורדת targets.mind
+----------------------------- */
+
+downloadButton.addEventListener(
+  "click",
+  function() {
+
+    if (!exportedBuffer) {
+      return;
+    }
+
+    const blob =
+      new Blob(
+        [exportedBuffer],
+        {
+          type:
+            "application/octet-stream"
+        }
+      );
+
+    const url =
+      URL.createObjectURL(blob);
+
+    const link =
+      document.createElement("a");
+
+    link.href = url;
+
+    link.download =
+      "targets.mind";
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    link.remove();
+
+    URL.revokeObjectURL(url);
+
+  }
+);
+
+</script>
+
+</body>
+</html>
