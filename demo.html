@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Last50 AR Demo</title>
+
+  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #000;
+    }
+
+    #overlay {
+      position: absolute;
+      z-index: 10;
+      top: 20px;
+      left: 20px;
+      right: 20px;
+      text-align: center;
+      color: white;
+      font-family: Arial, sans-serif;
+      font-size: 20px;
+      text-shadow: 0 2px 8px black;
+      pointer-events: none;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="overlay">
+  Last50 AR Demo
+</div>
+
+<a-scene
+  mindar-image="imageTargetSrc: ./targets.mind;"
+  vr-mode-ui="enabled: false"
+  device-orientation-permission-ui="enabled: false"
+  embedded>
+
+  <a-camera
+    position="0 0 0"
+    look-controls="enabled: false">
+  </a-camera>
+
+  <a-entity mindar-image-target="targetIndex: 0">
+
+    <!-- גוף החץ -->
+    <a-box
+      position="0 0.15 0.2"
+      scale="0.12 0.45 0.06"
+      color="#00A8FF">
+    </a-box>
+
+    <!-- ראש החץ -->
+    <a-cone
+      position="0 0.52 0.2"
+      radius-bottom="0.22"
+      radius-top="0"
+      height="0.32"
+      color="#00A8FF">
+    </a-cone>
+
+    <!-- טקסט -->
+    <a-text
+      value="GO STRAIGHT"
+      position="0 0.9 0.2"
+      align="center"
+      width="2.5"
+      color="#FFFFFF">
+    </a-text>
+
+  </a-entity>
+
+</a-scene>
+
+</body>
+</html>
