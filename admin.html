@@ -20,20 +20,20 @@
     body {
       margin: 0;
       padding: 22px;
-      font-family: Arial, sans-serif;
       background: #111;
       color: white;
+      font-family: Arial, sans-serif;
       direction: rtl;
     }
 
     .container {
-      max-width: 520px;
+      max-width: 540px;
       margin: auto;
     }
 
     h1 {
       text-align: center;
-      margin-bottom: 4px;
+      margin-bottom: 5px;
     }
 
     h2 {
@@ -42,28 +42,17 @@
       margin-top: 0;
     }
 
-    h3 {
-      margin-top: 0;
-    }
-
     .section {
-      margin-top: 24px;
+      margin-top: 22px;
       padding: 20px;
       background: #1d1d1d;
       border-radius: 16px;
     }
 
-    .stepTitle {
-      color: #66ff80;
-      font-size: 22px;
-      font-weight: bold;
-      margin-bottom: 16px;
-    }
-
     label {
       display: block;
-      margin-top: 16px;
-      margin-bottom: 7px;
+      margin-top: 15px;
+      margin-bottom: 6px;
     }
 
     input,
@@ -73,32 +62,27 @@
       width: 100%;
       padding: 14px;
       font-size: 17px;
-      border-radius: 9px;
       border: none;
+      border-radius: 9px;
     }
 
     textarea {
       min-height: 90px;
-      resize: vertical;
     }
 
     button {
-      margin-top: 18px;
+      margin-top: 16px;
       font-weight: bold;
       cursor: pointer;
     }
 
-    button:disabled,
-    input:disabled {
-      opacity: 0.5;
-      cursor: default;
+    button:disabled {
+      opacity: .5;
     }
 
-    #preview {
-      display: none;
-      width: 100%;
-      margin-top: 15px;
-      border-radius: 12px;
+    #loadRouteButton {
+      background: #673ab7;
+      color: white;
     }
 
     #compileButton {
@@ -112,7 +96,7 @@
       color: white;
     }
 
-    #addStepButton {
+    #newStepButton {
       display: none;
       background: #ff9800;
       color: white;
@@ -124,11 +108,11 @@
       color: white;
     }
 
-    #status,
-    #saveStatus {
-      margin-top: 16px;
-      text-align: center;
-      line-height: 1.5;
+    #preview {
+      display: none;
+      width: 100%;
+      margin-top: 15px;
+      border-radius: 12px;
     }
 
     .success {
@@ -139,32 +123,43 @@
       color: #ff6666;
     }
 
-    .infoBox {
-      margin-top: 20px;
-      background: #252525;
-      border-radius: 12px;
-      padding: 15px;
+    #status,
+    #saveStatus {
+      text-align: center;
+      margin-top: 15px;
+      line-height: 1.5;
     }
 
-    .stepRow {
-      padding: 12px;
+    .stepItem {
       margin-top: 10px;
+      padding: 14px;
       background: #292929;
       border-radius: 10px;
     }
 
+    .stepItem button {
+      background: #444;
+      color: white;
+      margin-top: 8px;
+    }
+
     .routeBox {
-      direction: ltr;
-      text-align: left;
-      word-break: break-all;
+      margin-top: 18px;
       padding: 15px;
       background: #252525;
       border-radius: 12px;
-      margin-top: 18px;
+      direction: ltr;
+      text-align: left;
+      word-break: break-all;
     }
 
     .routeBox a {
       color: #66ff80;
+    }
+
+    .small {
+      color: #aaa;
+      font-size: 14px;
     }
   </style>
 </head>
@@ -174,14 +169,29 @@
 <div class="container">
 
   <h1>Last50</h1>
-  <h2>Multi-Step Admin</h2>
+  <h2>Route Admin</h2>
 
-
-  <!-- ROUTE -->
 
   <div class="section">
 
     <h3>מסלול</h3>
+
+    <label>
+      Route ID קיים — אופציונלי
+    </label>
+
+    <input
+      id="existingRouteId"
+      type="number"
+      placeholder="לדוגמה: 12"
+    >
+
+    <button
+      id="loadRouteButton"
+      type="button"
+    >
+      טען מסלול קיים
+    </button>
 
     <label>
       שם היעד
@@ -194,25 +204,43 @@
     >
 
     <div
-      id="routeInfo"
-      class="infoBox"
-      style="display:none;"
+      id="routeStatus"
+      class="small"
+      style="margin-top:12px;"
     ></div>
 
   </div>
 
 
-  <!-- STEP -->
+  <div
+    id="stepsListSection"
+    class="section"
+    style="display:none;"
+  >
+
+    <h3>נקודות במסלול</h3>
+
+    <div id="stepsList"></div>
+
+  </div>
+
 
   <div class="section">
 
-    <div
-      id="stepTitle"
-      class="stepTitle"
-    >
-      נקודה 1
-    </div>
+    <h3 id="stepTitle">
+      נקודה חדשה
+    </h3>
 
+    <label>
+      מספר נקודה
+    </label>
+
+    <input
+      id="stepOrder"
+      type="number"
+      min="1"
+      value="1"
+    >
 
     <label>
       שם הנקודה
@@ -221,9 +249,8 @@
     <input
       id="markerName"
       type="text"
-      placeholder="לדוגמה: כניסה למשרד"
+      placeholder="לדוגמה: מסדרון"
     >
-
 
     <label>
       תמונת Marker
@@ -238,17 +265,15 @@
 
     <img
       id="preview"
-      alt="Marker preview"
+      alt="Marker"
     >
 
-
     <button
-      type="button"
       id="compileButton"
+      type="button"
     >
       צור Marker AR
     </button>
-
 
     <div id="status">
       ממתין לתמונה...
@@ -282,25 +307,25 @@
       </option>
 
       <option value="destination">
-        ⭐ הגעת ליעד
+        ⭐ יעד
       </option>
 
     </select>
 
 
     <label>
-      הוראה למשתמש
+      הוראת ניווט
     </label>
 
     <textarea
       id="instruction"
-      placeholder="לדוגמה: המשך ישר 10 מטר ואז פנה ימינה"
+      placeholder="לדוגמה: פנה שמאלה והמשך 10 מטר"
     ></textarea>
 
 
     <button
-      type="button"
       id="saveStepButton"
+      type="button"
     >
       שמור נקודה
     </button>
@@ -311,32 +336,17 @@
   <div id="saveStatus"></div>
 
 
-  <!-- SAVED STEPS -->
-
-  <div
-    id="savedStepsSection"
-    class="section"
-    style="display:none;"
-  >
-
-    <h3>נקודות שנשמרו</h3>
-
-    <div id="savedSteps"></div>
-
-  </div>
-
-
   <button
+    id="newStepButton"
     type="button"
-    id="addStepButton"
   >
-    ➕ הוסף נקודה נוספת
+    ➕ הוסף נקודה חדשה
   </button>
 
 
   <button
-    type="button"
     id="finishButton"
+    type="button"
   >
     ✅ סיים מסלול
   </button>
@@ -349,9 +359,9 @@
 
 <script>
 
-/* ==================================================
+/* ======================================
    CONFIG
-================================================== */
+====================================== */
 
 const SUPABASE_URL =
   "https://batvowvhsqyvacigmzyv.supabase.co";
@@ -373,18 +383,33 @@ const supabaseClient =
   );
 
 
-/* ==================================================
+/* ======================================
    ELEMENTS
-================================================== */
+====================================== */
+
+const existingRouteId =
+  document.getElementById("existingRouteId");
+
+const loadRouteButton =
+  document.getElementById("loadRouteButton");
 
 const routeName =
   document.getElementById("routeName");
 
-const routeInfo =
-  document.getElementById("routeInfo");
+const routeStatus =
+  document.getElementById("routeStatus");
+
+const stepsListSection =
+  document.getElementById("stepsListSection");
+
+const stepsList =
+  document.getElementById("stepsList");
 
 const stepTitle =
   document.getElementById("stepTitle");
+
+const stepOrder =
+  document.getElementById("stepOrder");
 
 const markerName =
   document.getElementById("markerName");
@@ -413,44 +438,40 @@ const saveStepButton =
 const saveStatus =
   document.getElementById("saveStatus");
 
-const addStepButton =
-  document.getElementById("addStepButton");
+const newStepButton =
+  document.getElementById("newStepButton");
 
 const finishButton =
   document.getElementById("finishButton");
-
-const savedStepsSection =
-  document.getElementById("savedStepsSection");
-
-const savedSteps =
-  document.getElementById("savedSteps");
 
 const finalResult =
   document.getElementById("finalResult");
 
 
-/* ==================================================
+/* ======================================
    STATE
-================================================== */
+====================================== */
 
 let routeId = null;
 
-let currentStepOrder = 1;
+let routeData = null;
+
+let routeSteps = [];
+
+let editingStepId = null;
 
 let selectedFile = null;
+
+let markerReady = false;
 
 let currentMarkerUrl = null;
 
 let currentTargetUrl = null;
 
-let markerReady = false;
 
-let savedStepData = [];
-
-
-/* ==================================================
-   IMAGE SELECT
-================================================== */
+/* ======================================
+   IMAGE
+====================================== */
 
 imageInput.addEventListener(
   "change",
@@ -459,14 +480,11 @@ imageInput.addEventListener(
     selectedFile =
       event.target.files[0];
 
-    markerReady =
-      false;
+    markerReady = false;
 
-    currentMarkerUrl =
-      null;
+    currentMarkerUrl = null;
 
-    currentTargetUrl =
-      null;
+    currentTargetUrl = null;
 
     saveStepButton.style.display =
       "none";
@@ -477,23 +495,17 @@ imageInput.addEventListener(
       preview.style.display =
         "none";
 
-      status.className = "";
-
-      status.innerText =
-        "ממתין לתמונה...";
-
       return;
     }
 
 
-    const imageURL =
+    const url =
       URL.createObjectURL(
         selectedFile
       );
 
 
-    preview.src =
-      imageURL;
+    preview.src = url;
 
     preview.style.display =
       "block";
@@ -502,15 +514,15 @@ imageInput.addEventListener(
     status.className = "";
 
     status.innerText =
-      "התמונה מוכנה. לחץ על צור Marker AR.";
+      "התמונה מוכנה. לחץ צור Marker AR.";
 
   }
 );
 
 
-/* ==================================================
-   CONVERT IMAGE TO JPEG
-================================================== */
+/* ======================================
+   JPEG
+====================================== */
 
 function convertImageToJpeg(file) {
 
@@ -520,8 +532,7 @@ function convertImageToJpeg(file) {
       const img =
         new Image();
 
-
-      const imageURL =
+      const url =
         URL.createObjectURL(
           file
         );
@@ -534,7 +545,6 @@ function convertImageToJpeg(file) {
 
             const MAX_SIZE =
               1600;
-
 
             let width =
               img.naturalWidth;
@@ -554,12 +564,10 @@ function convertImageToJpeg(file) {
                   MAX_SIZE / height
                 );
 
-
               width =
                 Math.round(
                   width * scale
                 );
-
 
               height =
                 Math.round(
@@ -601,7 +609,7 @@ function convertImageToJpeg(file) {
               function(blob) {
 
                 URL.revokeObjectURL(
-                  imageURL
+                  url
                 );
 
 
@@ -630,10 +638,6 @@ function convertImageToJpeg(file) {
 
           catch(error) {
 
-            URL.revokeObjectURL(
-              imageURL
-            );
-
             reject(error);
 
           }
@@ -644,14 +648,9 @@ function convertImageToJpeg(file) {
       img.onerror =
         function() {
 
-          URL.revokeObjectURL(
-            imageURL
-          );
-
-
           reject(
             new Error(
-              "לא ניתן לקרוא את התמונה"
+              "לא ניתן לקרוא תמונה"
             )
           );
 
@@ -659,7 +658,7 @@ function convertImageToJpeg(file) {
 
 
       img.src =
-        imageURL;
+        url;
 
     }
   );
@@ -667,9 +666,9 @@ function convertImageToJpeg(file) {
 }
 
 
-/* ==================================================
-   RAILWAY COMPILER
-================================================== */
+/* ======================================
+   COMPILER
+====================================== */
 
 async function compileMarker(
   jpegBlob
@@ -719,8 +718,6 @@ async function compileMarker(
 
 
     throw new Error(
-      "Compiler: "
-      +
       message
     );
 
@@ -737,7 +734,7 @@ async function compileMarker(
   ) {
 
     throw new Error(
-      "ה-Compiler החזיר קובץ ריק"
+      "קובץ .mind ריק"
     );
 
   }
@@ -748,13 +745,13 @@ async function compileMarker(
 }
 
 
-/* ==================================================
-   STORAGE UPLOAD
-================================================== */
+/* ======================================
+   STORAGE
+====================================== */
 
 async function uploadFile(
-  fileName,
-  fileData,
+  name,
+  file,
   contentType
 ) {
 
@@ -768,8 +765,8 @@ async function uploadFile(
         STORAGE_BUCKET
       )
       .upload(
-        fileName,
-        fileData,
+        name,
+        file,
         {
           cacheControl:
             "3600",
@@ -795,7 +792,7 @@ async function uploadFile(
 
 
   const {
-    data: publicUrlData
+    data: publicData
   } =
     supabaseClient
       .storage
@@ -807,26 +804,14 @@ async function uploadFile(
       );
 
 
-  if (
-    !publicUrlData ||
-    !publicUrlData.publicUrl
-  ) {
-
-    throw new Error(
-      "לא התקבלה כתובת לקובץ"
-    );
-
-  }
-
-
-  return publicUrlData.publicUrl;
+  return publicData.publicUrl;
 
 }
 
 
-/* ==================================================
-   CREATE MARKER
-================================================== */
+/* ======================================
+   COMPILE BUTTON
+====================================== */
 
 compileButton.addEventListener(
   "click",
@@ -853,14 +838,11 @@ compileButton.addEventListener(
       markerReady =
         false;
 
-      saveStepButton.style.display =
-        "none";
-
 
       status.className = "";
 
       status.innerText =
-        "מכין את התמונה...";
+        "מכין תמונה...";
 
 
       const jpegBlob =
@@ -870,7 +852,7 @@ compileButton.addEventListener(
 
 
       status.innerText =
-        "יוצר Marker AR בענן...";
+        "יוצר קובץ AR ב-Railway...";
 
 
       const mindBlob =
@@ -879,7 +861,7 @@ compileButton.addEventListener(
         );
 
 
-      const uniqueId =
+      const unique =
         Date.now()
         +
         "_"
@@ -890,7 +872,7 @@ compileButton.addEventListener(
 
 
       status.innerText =
-        "מעלה תמונת Marker...";
+        "מעלה Marker ל-Supabase...";
 
 
       currentMarkerUrl =
@@ -898,7 +880,7 @@ compileButton.addEventListener(
 
           "marker_"
           +
-          uniqueId
+          unique
           +
           ".jpg",
 
@@ -910,7 +892,7 @@ compileButton.addEventListener(
 
 
       status.innerText =
-        "מעלה קובץ AR...";
+        "מעלה target.mind...";
 
 
       currentTargetUrl =
@@ -918,7 +900,7 @@ compileButton.addEventListener(
 
           "target_"
           +
-          uniqueId
+          unique
           +
           ".mind",
 
@@ -937,7 +919,7 @@ compileButton.addEventListener(
         "success";
 
 
-      status.innerHTML =
+      status.innerText =
         "✅ Marker AR מוכן";
 
 
@@ -948,13 +930,7 @@ compileButton.addEventListener(
 
     catch(error) {
 
-      console.error(
-        error
-      );
-
-
-      markerReady =
-        false;
+      console.error(error);
 
 
       status.className =
@@ -987,9 +963,133 @@ compileButton.addEventListener(
 );
 
 
-/* ==================================================
-   CREATE ROUTE
-================================================== */
+/* ======================================
+   LOAD EXISTING ROUTE
+====================================== */
+
+loadRouteButton.addEventListener(
+  "click",
+  async function() {
+
+    const id =
+      existingRouteId.value.trim();
+
+
+    if (!id) {
+
+      alert(
+        "הכנס Route ID"
+      );
+
+      return;
+    }
+
+
+    try {
+
+      routeStatus.innerText =
+        "טוען מסלול...";
+
+
+      const {
+        data: route,
+        error: routeError
+      } =
+        await supabaseClient
+          .from("routes")
+          .select("*")
+          .eq("id", id)
+          .single();
+
+
+      if (routeError) {
+        throw routeError;
+      }
+
+
+      const {
+        data: steps,
+        error: stepError
+      } =
+        await supabaseClient
+          .from("route_steps")
+          .select("*")
+          .eq("route_id", id)
+          .order(
+            "step_order",
+            {
+              ascending: true
+            }
+          );
+
+
+      if (stepError) {
+        throw stepError;
+      }
+
+
+      routeId =
+        route.id;
+
+
+      routeData =
+        route;
+
+
+      routeSteps =
+        steps || [];
+
+
+      routeName.value =
+        route.name || "";
+
+
+      routeName.disabled =
+        true;
+
+
+      routeStatus.className =
+        "success";
+
+
+      routeStatus.innerText =
+        "✅ Route "
+        +
+        routeId
+        +
+        " נטען";
+
+
+      renderSteps();
+
+
+      prepareNewStep();
+
+    }
+
+    catch(error) {
+
+      console.error(error);
+
+
+      routeStatus.className =
+        "error";
+
+
+      routeStatus.innerText =
+        "❌ "
+        +
+        error.message;
+
+    }
+
+  }
+);
+
+
+/* ======================================
+   CREATE NEW ROUTE
+====================================== */
 
 async function createRouteIfNeeded() {
 
@@ -999,27 +1099,17 @@ async function createRouteIfNeeded() {
 
 
   const name =
-    routeName
-      .value
-      .trim();
+    routeName.value.trim();
 
 
   if (!name) {
 
     throw new Error(
-      "הכנס שם ליעד"
+      "הכנס שם יעד"
     );
 
   }
 
-
-  /*
-    The routes table is kept for
-    the permanent route ID / URL.
-
-    First step is duplicated here
-    for backward compatibility.
-  */
 
   const {
     data,
@@ -1035,17 +1125,17 @@ async function createRouteIfNeeded() {
         marker_name:
           markerName.value.trim(),
 
-        direction:
-          direction.value,
-
-        instruction:
-          instruction.value.trim(),
-
         marker_url:
           currentMarkerUrl,
 
         target_url:
-          currentTargetUrl
+          currentTargetUrl,
+
+        direction:
+          direction.value,
+
+        instruction:
+          instruction.value.trim()
 
       })
       .select()
@@ -1067,20 +1157,26 @@ async function createRouteIfNeeded() {
     data.id;
 
 
+  routeData =
+    data;
+
+
   routeName.disabled =
     true;
 
 
-  routeInfo.style.display =
-    "block";
+  existingRouteId.value =
+    routeId;
 
 
-  routeInfo.innerHTML =
-    "Route ID: <strong>"
+  routeStatus.className =
+    "success";
+
+
+  routeStatus.innerText =
+    "✅ נוצר Route "
     +
-    routeId
-    +
-    "</strong>";
+    routeId;
 
 
   return routeId;
@@ -1088,50 +1184,28 @@ async function createRouteIfNeeded() {
 }
 
 
-/* ==================================================
-   SAVE STEP
-================================================== */
+/* ======================================
+   SAVE / UPDATE STEP
+====================================== */
 
 saveStepButton.addEventListener(
   "click",
   async function() {
 
-    const pointName =
-      markerName
-        .value
-        .trim();
-
-
-    const pointInstruction =
-      instruction
-        .value
-        .trim();
-
-
-    if (!routeName.value.trim()) {
-
-      alert(
-        "הכנס שם ליעד"
-      );
-
-      return;
-    }
-
-
-    if (!pointName) {
-
-      alert(
-        "הכנס שם לנקודה"
-      );
-
-      return;
-    }
-
-
     if (!markerReady) {
 
       alert(
         "קודם צור Marker AR"
+      );
+
+      return;
+    }
+
+
+    if (!markerName.value.trim()) {
+
+      alert(
+        "הכנס שם נקודה"
       );
 
       return;
@@ -1144,8 +1218,7 @@ saveStepButton.addEventListener(
         true;
 
 
-      saveStatus.className =
-        "";
+      saveStatus.className = "";
 
 
       saveStatus.innerText =
@@ -1155,16 +1228,19 @@ saveStepButton.addEventListener(
       await createRouteIfNeeded();
 
 
-      const stepObject = {
+      const payload = {
 
         route_id:
           routeId,
 
         step_order:
-          currentStepOrder,
+          parseInt(
+            stepOrder.value,
+            10
+          ),
 
         marker_name:
-          pointName,
+          markerName.value.trim(),
 
         marker_url:
           currentMarkerUrl,
@@ -1176,40 +1252,54 @@ saveStepButton.addEventListener(
           direction.value,
 
         instruction:
-          pointInstruction
+          instruction.value.trim()
 
       };
 
 
-      const {
-        data,
-        error
-      } =
-        await supabaseClient
-          .from(
-            "route_steps"
-          )
-          .insert(
-            stepObject
-          )
-          .select()
-          .single();
+      let result;
 
 
-      if (error) {
+      if (editingStepId) {
 
-        throw new Error(
-          "Step: "
-          +
-          error.message
-        );
+        result =
+          await supabaseClient
+            .from("route_steps")
+            .update(
+              payload
+            )
+            .eq(
+              "id",
+              editingStepId
+            )
+            .select()
+            .single();
+
+      }
+
+      else {
+
+        result =
+          await supabaseClient
+            .from("route_steps")
+            .insert(
+              payload
+            )
+            .select()
+            .single();
 
       }
 
 
-      savedStepData.push(
-        data
-      );
+      if (result.error) {
+
+        throw new Error(
+          "Step: "
+          +
+          result.error.message
+        );
+
+      }
 
 
       saveStatus.className =
@@ -1217,41 +1307,20 @@ saveStepButton.addEventListener(
 
 
       saveStatus.innerText =
-        "✅ נקודה "
-        +
-        currentStepOrder
-        +
-        " נשמרה";
+        editingStepId
+        ?
+        "✅ הנקודה עודכנה"
+        :
+        "✅ הנקודה נשמרה";
 
 
-      renderSavedSteps();
+      await reloadSteps();
 
 
-      saveStepButton.style.display =
-        "none";
+      prepareNewStep();
 
 
-      compileButton.disabled =
-        true;
-
-
-      imageInput.disabled =
-        true;
-
-
-      markerName.disabled =
-        true;
-
-
-      direction.disabled =
-        true;
-
-
-      instruction.disabled =
-        true;
-
-
-      addStepButton.style.display =
+      newStepButton.style.display =
         "block";
 
 
@@ -1262,9 +1331,7 @@ saveStepButton.addEventListener(
 
     catch(error) {
 
-      console.error(
-        error
-      );
+      console.error(error);
 
 
       saveStatus.className =
@@ -1294,59 +1361,143 @@ saveStepButton.addEventListener(
 );
 
 
-/* ==================================================
-   SHOW SAVED STEPS
-================================================== */
+/* ======================================
+   RELOAD STEPS
+====================================== */
 
-function renderSavedSteps() {
+async function reloadSteps() {
 
-  savedStepsSection.style.display =
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("route_steps")
+      .select("*")
+      .eq(
+        "route_id",
+        routeId
+      )
+      .order(
+        "step_order",
+        {
+          ascending: true
+        }
+      );
+
+
+  if (error) {
+    throw error;
+  }
+
+
+  routeSteps =
+    data || [];
+
+
+  renderSteps();
+
+}
+
+
+/* ======================================
+   RENDER STEPS
+====================================== */
+
+function renderSteps() {
+
+  stepsListSection.style.display =
     "block";
 
 
-  savedSteps.innerHTML =
+  stepsList.innerHTML =
     "";
 
 
-  savedStepData.forEach(
+  if (
+    routeSteps.length === 0
+  ) {
+
+    stepsList.innerHTML =
+      "<div class='small'>אין עדיין נקודות</div>";
+
+    return;
+  }
+
+
+  routeSteps.forEach(
     function(step) {
 
-      const row =
+      const div =
         document.createElement(
           "div"
         );
 
 
-      row.className =
-        "stepRow";
+      div.className =
+        "stepItem";
 
 
-      row.innerHTML =
-        "<strong>נקודה "
-        +
-        step.step_order
-        +
-        "</strong><br>"
-        +
-        step.marker_name
-        +
-        "<br>"
-        +
-        directionSymbol(
-          step.direction
-        )
-        +
-        " "
-        +
-        (
-          step.instruction
-          ||
-          ""
+      const hasTarget =
+        !!step.target_url;
+
+
+      div.innerHTML = `
+
+        <strong>
+          נקודה ${step.step_order}
+        </strong>
+
+        <br>
+
+        ${step.marker_name || ""}
+
+        <br>
+
+        ${
+          hasTarget
+          ?
+          "✅ AR מוכן"
+          :
+          "❌ חסר AR"
+        }
+
+      `;
+
+
+      const button =
+        document.createElement(
+          "button"
         );
 
 
-      savedSteps.appendChild(
-        row
+      button.type =
+        "button";
+
+
+      button.innerText =
+        hasTarget
+        ?
+        "ערוך Marker"
+        :
+        "צור Marker לנקודה";
+
+
+      button.onclick =
+        function() {
+
+          editStep(step);
+
+        };
+
+
+      div.appendChild(
+        button
+      );
+
+
+      stepsList.appendChild(
+        div
       );
 
     }
@@ -1355,156 +1506,221 @@ function renderSavedSteps() {
 }
 
 
-/* ==================================================
-   DIRECTION SYMBOL
-================================================== */
+/* ======================================
+   EDIT EXISTING STEP
+====================================== */
 
-function directionSymbol(value) {
+function editStep(step) {
 
-  switch(value) {
-
-    case "straight":
-      return "⬆️";
-
-    case "left":
-      return "⬅️";
-
-    case "right":
-      return "➡️";
-
-    case "elevator":
-      return "🛗";
-
-    case "stairs":
-      return "🪜";
-
-    case "destination":
-      return "⭐";
-
-    default:
-      return "";
-  }
-
-}
+  editingStepId =
+    step.id;
 
 
-/* ==================================================
-   ADD NEXT STEP
-================================================== */
-
-addStepButton.addEventListener(
-  "click",
-  function() {
-
-    currentStepOrder++;
+  stepTitle.innerText =
+    "עריכת נקודה "
+    +
+    step.step_order;
 
 
-    stepTitle.innerText =
-      "נקודה "
-      +
-      currentStepOrder;
+  stepOrder.value =
+    step.step_order;
 
 
-    selectedFile =
-      null;
+  markerName.value =
+    step.marker_name || "";
 
 
-    currentMarkerUrl =
-      null;
+  direction.value =
+    step.direction || "straight";
 
 
-    currentTargetUrl =
-      null;
+  instruction.value =
+    step.instruction || "";
 
 
-    markerReady =
-      false;
+  currentMarkerUrl =
+    step.marker_url || null;
 
 
-    markerName.value =
-      "";
+  currentTargetUrl =
+    step.target_url || null;
 
 
-    imageInput.value =
-      "";
+  markerReady =
+    !!step.target_url;
 
+
+  selectedFile =
+    null;
+
+
+  imageInput.value =
+    "";
+
+
+  if (step.marker_url) {
 
     preview.src =
-      "";
+      step.marker_url;
 
+
+    preview.style.display =
+      "block";
+
+  }
+
+  else {
 
     preview.style.display =
       "none";
 
-
-    direction.value =
-      "straight";
+  }
 
 
-    instruction.value =
-      "";
+  status.className =
+    step.target_url
+    ?
+    "success"
+    :
+    "";
 
 
-    status.className =
-      "";
+  status.innerText =
+    step.target_url
+    ?
+    "✅ לנקודה כבר יש Marker AR. אפשר לצלם חדש כדי להחליף."
+    :
+    "בחר/צלם תמונה ואז צור Marker AR.";
 
 
-    status.innerText =
-      "ממתין לתמונה...";
+  /*
+    If target already exists,
+    allow saving current metadata.
+
+    If target is missing,
+    user must compile first.
+  */
+
+  saveStepButton.style.display =
+    step.target_url
+    ?
+    "block"
+    :
+    "none";
 
 
-    saveStatus.innerText =
-      "";
+  window.scrollTo({
+    top:
+      document.body.scrollHeight,
+
+    behavior:
+      "smooth"
+  });
+
+}
 
 
-    markerName.disabled =
-      false;
+/* ======================================
+   NEW STEP
+====================================== */
+
+function prepareNewStep() {
+
+  editingStepId =
+    null;
 
 
-    imageInput.disabled =
-      false;
+  const nextOrder =
+    routeSteps.length
+    ?
+    Math.max(
+      ...routeSteps.map(
+        s => s.step_order || 0
+      )
+    ) + 1
+    :
+    1;
 
 
-    direction.disabled =
-      false;
+  stepTitle.innerText =
+    "נקודה חדשה";
 
 
-    instruction.disabled =
-      false;
+  stepOrder.value =
+    nextOrder;
 
 
-    compileButton.disabled =
-      false;
+  markerName.value =
+    "";
 
 
-    saveStepButton.style.display =
-      "none";
+  imageInput.value =
+    "";
 
 
-    addStepButton.style.display =
-      "none";
+  preview.src =
+    "";
 
 
-    /*
-      Keep Finish visible so
-      user can finish at any time.
-    */
+  preview.style.display =
+    "none";
 
-    window.scrollTo({
-      top:
-        document.body.scrollHeight,
 
-      behavior:
-        "smooth"
-    });
+  direction.value =
+    "straight";
+
+
+  instruction.value =
+    "";
+
+
+  selectedFile =
+    null;
+
+
+  markerReady =
+    false;
+
+
+  currentMarkerUrl =
+    null;
+
+
+  currentTargetUrl =
+    null;
+
+
+  status.className =
+    "";
+
+
+  status.innerText =
+    "ממתין לתמונה...";
+
+
+  saveStepButton.style.display =
+    "none";
+
+}
+
+
+/* ======================================
+   NEW STEP BUTTON
+====================================== */
+
+newStepButton.addEventListener(
+  "click",
+  function() {
+
+    prepareNewStep();
 
   }
 );
 
 
-/* ==================================================
-   FINISH ROUTE
-================================================== */
+/* ======================================
+   FINISH
+====================================== */
 
 finishButton.addEventListener(
   "click",
@@ -1513,14 +1729,14 @@ finishButton.addEventListener(
     if (!routeId) {
 
       alert(
-        "עדיין לא נשמרה נקודה"
+        "אין Route"
       );
 
       return;
     }
 
 
-    const userUrl =
+    const url =
       "https://ido-last50.github.io/last50/?id="
       +
       routeId;
@@ -1531,34 +1747,21 @@ finishButton.addEventListener(
       <div class="section">
 
         <h3 class="success">
-          ✅ המסלול הושלם
+          ✅ המסלול מוכן
         </h3>
-
-        <p>
-          נשמרו ${savedStepData.length} נקודות.
-        </p>
 
         <div class="routeBox">
 
-          <strong>
-            Route ID:
-          </strong>
-
+          Route ID:
           ${routeId}
 
           <br><br>
 
-          <strong>
-            User URL:
-          </strong>
-
-          <br>
-
           <a
-            href="${userUrl}"
+            href="${url}"
             target="_blank"
           >
-            ${userUrl}
+            ${url}
           </a>
 
         </div>
@@ -1567,25 +1770,37 @@ finishButton.addEventListener(
 
     `;
 
-
-    addStepButton.style.display =
-      "none";
-
-
-    finishButton.style.display =
-      "none";
-
-
-    window.scrollTo({
-      top:
-        document.body.scrollHeight,
-
-      behavior:
-        "smooth"
-    });
-
   }
 );
+
+
+/* ======================================
+   AUTO LOAD ?id=
+====================================== */
+
+const params =
+  new URLSearchParams(
+    window.location.search
+  );
+
+
+const autoId =
+  params.get("id");
+
+
+if (autoId) {
+
+  existingRouteId.value =
+    autoId;
+
+
+  setTimeout(
+    () =>
+      loadRouteButton.click(),
+    100
+  );
+
+}
 
 </script>
 
