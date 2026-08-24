@@ -5,7 +5,7 @@
 
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
   >
 
   <title>Last50 Admin</title>
@@ -14,7 +14,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-
     * {
       box-sizing: border-box;
     }
@@ -78,7 +77,8 @@
       cursor: pointer;
     }
 
-    button:disabled {
+    button:disabled,
+    input:disabled {
       opacity: 0.5;
     }
 
@@ -94,6 +94,12 @@
       text-align: center;
       margin-top: 15px;
       font-size: 17px;
+      line-height: 1.5;
+    }
+
+    #markerButton {
+      background: #2196F3;
+      color: white;
     }
 
     #saveButton {
@@ -120,9 +126,11 @@
       word-break: break-all;
     }
 
+    .routeBox a {
+      color: #66ff80;
+    }
   </style>
 </head>
-
 
 <body>
 
@@ -187,7 +195,7 @@
       type="button"
       id="markerButton"
     >
-      אשר תמונת Marker
+      צור Marker AR
     </button>
 
     <div id="status">
@@ -204,7 +212,6 @@
     <h3>
       3. הוראת ניווט ראשונה
     </h3>
-
 
     <label>
       כיוון
@@ -260,7 +267,6 @@
     שמור מסלול בענן
   </button>
 
-
   <div id="saveStatus"></div>
 
 </div>
@@ -269,7 +275,7 @@
 <script>
 
 /* =========================================
-   SUPABASE
+   CONFIG
 ========================================= */
 
 const SUPABASE_URL =
@@ -277,6 +283,12 @@ const SUPABASE_URL =
 
 const SUPABASE_KEY =
   "sb_publishable_eq-i5YF30iQ03ntmqcg_hA_AJy5NJvK";
+
+const COMPILER_URL =
+  "https://last50-compiler-production.up.railway.app/compile";
+
+const STORAGE_BUCKET =
+  "markers";
 
 
 const supabaseClient =
@@ -313,9 +325,13 @@ let selectedFile = null;
 
 let markerReady = false;
 
+let markerUrl = null;
+
+let targetUrl = null;
+
 
 /* =========================================
-   TAKE / SELECT PHOTO
+   SELECT PHOTO
 ========================================= */
 
 imageInput.addEventListener(
@@ -327,10 +343,25 @@ imageInput.addEventListener(
 
     markerReady = false;
 
+    markerUrl = null;
+
+    targetUrl = null;
+
     saveButton.style.display =
       "none";
 
+    saveStatus.innerHTML = "";
+
     if (!selectedFile) {
+
+      preview.style.display =
+        "none";
+
+      status.className = "";
+
+      status.innerText =
+        "ממתין לתמונה...";
+
       return;
     }
 
@@ -351,19 +382,330 @@ imageInput.addEventListener(
     status.className = "";
 
     status.innerText =
-      "התמונה מוכנה";
+      "התמונה מוכנה. לחץ על צור Marker AR.";
 
   }
 );
 
 
 /* =========================================
-   CONFIRM MARKER
+   CONVERT IMAGE TO JPEG
+========================================= */
+
+function convertImageToJpeg(file) {
+
+  return new Promise(
+    (resolve, reject) => {
+
+      const img =
+        new Image();
+
+      const imageURL =
+        URL.createObjectURL(file);
+
+
+      img.onload =
+        function() {
+
+          try {
+
+            const MAX_SIZE =
+              1600;
+
+            let width =
+              img.naturalWidth;
+
+            let height =
+              img.naturalHeight;
+
+
+            if (
+              width > MAX_SIZE ||
+              height > MAX_SIZE
+            ) {
+
+              const scale =
+                Math.min(
+                  MAX_SIZE / width,
+                  MAX_SIZE / height
+                );
+
+              width =
+                Math.round(
+                  width * scale
+                );
+
+              height =
+                Math.round(
+                  height * scale
+                );
+
+            }
+
+
+            const canvas =
+              document.createElement(
+                "canvas"
+              );
+
+            canvas.width =
+              width;
+
+            canvas.height =
+              height;
+
+
+            const ctx =
+              canvas.getContext(
+                "2d"
+              );
+
+
+            ctx.drawImage(
+              img,
+              0,
+              0,
+              width,
+              height
+            );
+
+
+            canvas.toBlob(
+              function(blob) {
+
+                URL.revokeObjectURL(
+                  imageURL
+                );
+
+                if (!blob) {
+
+                  reject(
+                    new Error(
+                      "לא ניתן להמיר את התמונה ל-JPEG"
+                    )
+                  );
+
+                  return;
+                }
+
+                resolve(blob);
+
+              },
+
+              "image/jpeg",
+
+              0.9
+            );
+
+          }
+
+          catch(error) {
+
+            URL.revokeObjectURL(
+              imageURL
+            );
+
+            reject(error);
+
+          }
+
+        };
+
+
+      img.onerror =
+        function() {
+
+          URL.revokeObjectURL(
+            imageURL
+          );
+
+          reject(
+            new Error(
+              "לא ניתן לקרוא את התמונה"
+            )
+          );
+
+        };
+
+
+      img.src =
+        imageURL;
+
+    }
+  );
+
+}
+
+
+/* =========================================
+   SEND IMAGE TO RAILWAY COMPILER
+========================================= */
+
+async function compileMarker(
+  jpegBlob
+) {
+
+  const formData =
+    new FormData();
+
+
+  formData.append(
+    "image",
+    jpegBlob,
+    "marker.jpg"
+  );
+
+
+  const response =
+    await fetch(
+      COMPILER_URL,
+      {
+        method: "POST",
+        body: formData
+      }
+    );
+
+
+  if (!response.ok) {
+
+    let message =
+      "Compiler error";
+
+    try {
+
+      const data =
+        await response.json();
+
+      if (data.error) {
+        message =
+          data.error;
+      }
+
+    }
+
+    catch {
+
+      try {
+        message =
+          await response.text();
+      }
+      catch {}
+    }
+
+
+    throw new Error(
+      "Compiler: "
+      +
+      message
+    );
+
+  }
+
+
+  const mindBlob =
+    await response.blob();
+
+
+  if (
+    !mindBlob ||
+    mindBlob.size === 0
+  ) {
+
+    throw new Error(
+      "ה-Compiler החזיר קובץ ריק"
+    );
+
+  }
+
+
+  return mindBlob;
+
+}
+
+
+/* =========================================
+   UPLOAD FILE TO SUPABASE
+========================================= */
+
+async function uploadFile(
+  fileName,
+  fileData,
+  contentType
+) {
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .storage
+      .from(
+        STORAGE_BUCKET
+      )
+      .upload(
+        fileName,
+        fileData,
+        {
+          cacheControl:
+            "3600",
+
+          upsert:
+            false,
+
+          contentType:
+            contentType
+        }
+      );
+
+
+  if (error) {
+
+    throw new Error(
+      "Storage: "
+      +
+      error.message
+    );
+
+  }
+
+
+  const {
+    data: publicUrlData
+  } =
+    supabaseClient
+      .storage
+      .from(
+        STORAGE_BUCKET
+      )
+      .getPublicUrl(
+        data.path
+      );
+
+
+  if (
+    !publicUrlData ||
+    !publicUrlData.publicUrl
+  ) {
+
+    throw new Error(
+      "לא התקבלה כתובת לקובץ"
+    );
+
+  }
+
+
+  return publicUrlData.publicUrl;
+
+}
+
+
+/* =========================================
+   CREATE AR MARKER
 ========================================= */
 
 markerButton.addEventListener(
   "click",
-  function() {
+  async function() {
 
     if (!selectedFile) {
 
@@ -375,64 +717,183 @@ markerButton.addEventListener(
     }
 
 
-    markerReady = true;
+    try {
+
+      markerButton.disabled =
+        true;
+
+      imageInput.disabled =
+        true;
+
+      saveButton.style.display =
+        "none";
+
+      markerReady =
+        false;
+
+      markerUrl =
+        null;
+
+      targetUrl =
+        null;
 
 
-    status.className =
-      "success";
+      status.className = "";
+
+      status.innerText =
+        "מכין את התמונה...";
 
 
-    status.innerText =
-      "✅ תמונת Marker מוכנה";
+      /*
+        Convert iPhone image / HEIC
+        to standard JPEG
+      */
+
+      const jpegBlob =
+        await convertImageToJpeg(
+          selectedFile
+        );
 
 
-    saveButton.style.display =
-      "block";
+      /*
+        Railway:
+        JPG -> .mind
+      */
+
+      status.innerText =
+        "יוצר Marker AR בענן... זה יכול לקחת כחצי דקה עד דקה.";
+
+
+      const mindBlob =
+        await compileMarker(
+          jpegBlob
+        );
+
+
+      /*
+        Unique filename
+      */
+
+      const uniqueId =
+        Date.now()
+        +
+        "_"
+        +
+        Math.random()
+          .toString(36)
+          .substring(2, 8);
+
+
+      const markerFileName =
+        "marker_"
+        +
+        uniqueId
+        +
+        ".jpg";
+
+
+      const targetFileName =
+        "target_"
+        +
+        uniqueId
+        +
+        ".mind";
+
+
+      /*
+        Upload original marker image
+      */
+
+      status.innerText =
+        "מעלה את תמונת ה-Marker לענן...";
+
+
+      markerUrl =
+        await uploadFile(
+          markerFileName,
+          jpegBlob,
+          "image/jpeg"
+        );
+
+
+      /*
+        Upload .mind
+      */
+
+      status.innerText =
+        "מעלה את קובץ ה-AR לענן...";
+
+
+      targetUrl =
+        await uploadFile(
+          targetFileName,
+          mindBlob,
+          "application/octet-stream"
+        );
+
+
+      markerReady =
+        true;
+
+
+      status.className =
+        "success";
+
+
+      status.innerHTML =
+        "✅ Marker AR מוכן<br>התמונה וקובץ ה-.mind נשמרו בענן";
+
+
+      saveButton.style.display =
+        "block";
+
+    }
+
+    catch(error) {
+
+      console.error(
+        error
+      );
+
+
+      markerReady =
+        false;
+
+      markerUrl =
+        null;
+
+      targetUrl =
+        null;
+
+
+      status.className =
+        "error";
+
+
+      status.innerText =
+        "❌ "
+        +
+        error.message;
+
+
+      alert(
+        error.message
+      );
+
+    }
+
+    finally {
+
+      markerButton.disabled =
+        false;
+
+      imageInput.disabled =
+        false;
+
+    }
 
   }
 );
-
-
-/* =========================================
-   FILE EXTENSION
-========================================= */
-
-function getFileExtension(file) {
-
-  if (
-    file.name &&
-    file.name.includes(".")
-  ) {
-
-    return file.name
-      .split(".")
-      .pop()
-      .toLowerCase();
-
-  }
-
-
-  if (
-    file.type === "image/png"
-  ) {
-
-    return "png";
-
-  }
-
-
-  if (
-    file.type === "image/heic"
-  ) {
-
-    return "heic";
-
-  }
-
-
-  return "jpg";
-
-}
 
 
 /* =========================================
@@ -446,27 +907,35 @@ saveButton.addEventListener(
 
     const routeName =
       document
-        .getElementById("routeName")
+        .getElementById(
+          "routeName"
+        )
         .value
         .trim();
 
 
     const markerName =
       document
-        .getElementById("markerName")
+        .getElementById(
+          "markerName"
+        )
         .value
         .trim();
 
 
     const direction =
       document
-        .getElementById("direction")
+        .getElementById(
+          "direction"
+        )
         .value;
 
 
     const instruction =
       document
-        .getElementById("instruction")
+        .getElementById(
+          "instruction"
+        )
         .value
         .trim();
 
@@ -493,10 +962,14 @@ saveButton.addEventListener(
     }
 
 
-    if (!markerReady) {
+    if (
+      !markerReady ||
+      !markerUrl ||
+      !targetUrl
+    ) {
 
       alert(
-        "קודם אשר את תמונת ה-Marker"
+        "קודם צור Marker AR"
       );
 
       return;
@@ -505,126 +978,30 @@ saveButton.addEventListener(
 
     try {
 
-
       saveButton.disabled =
         true;
 
 
-      saveStatus.className = "";
+      saveStatus.className =
+        "";
 
 
       saveStatus.innerText =
-        "מעלה את תמונת ה-Marker...";
+        "שומר את המסלול ב-Supabase...";
 
 
-      /* ==========================
-         UNIQUE FILE NAME
-      ========================== */
-
-
-      const extension =
-        getFileExtension(
-          selectedFile
-        );
-
-
-      const fileName =
-        "marker_"
-        +
-        Date.now()
-        +
-        "_"
-        +
-        Math.random()
-          .toString(36)
-          .substring(2, 8)
-        +
-        "."
-        +
-        extension;
-
-
-      /* ==========================
-         UPLOAD IMAGE
-      ========================== */
-
-
-      const {
-        data: uploadData,
-        error: uploadError
-      } =
-        await supabaseClient
-          .storage
-          .from("markers")
-          .upload(
-            fileName,
-            selectedFile,
-            {
-              cacheControl: "3600",
-              upsert: false,
-              contentType:
-                selectedFile.type
-                ||
-                "image/jpeg"
-            }
-          );
-
-
-      if (uploadError) {
-
-        throw new Error(
-          "Storage: "
-          +
-          uploadError.message
-        );
-
-      }
-
-
-      /* ==========================
-         GET PUBLIC URL
-      ========================== */
-
-
-      const {
-        data: publicUrlData
-      } =
-        supabaseClient
-          .storage
-          .from("markers")
-          .getPublicUrl(
-            uploadData.path
-          );
-
-
-      const markerUrl =
-        publicUrlData.publicUrl;
-
-
-      if (!markerUrl) {
-
-        throw new Error(
-          "לא התקבלה כתובת לתמונה"
-        );
-
-      }
-
-
-      saveStatus.innerText =
-        "שומר את המסלול...";
-
-
-      /* ==========================
-         INSERT ROUTE
-      ========================== */
-
+      /*
+        INSERT ROUTE
+      */
 
       const {
         data: routeData,
         error: routeError
       } =
         await supabaseClient
-          .from("routes")
+          .from(
+            "routes"
+          )
           .insert({
 
             name:
@@ -640,7 +1017,10 @@ saveButton.addEventListener(
               instruction,
 
             marker_url:
-              markerUrl
+              markerUrl,
+
+            target_url:
+              targetUrl
 
           })
           .select()
@@ -656,11 +1036,6 @@ saveButton.addEventListener(
         );
 
       }
-
-
-      /* ==========================
-         SUCCESS
-      ========================== */
 
 
       const routeId =
@@ -699,7 +1074,32 @@ saveButton.addEventListener(
 
           <br>
 
-          ${userUrl}
+          <a
+            href="${userUrl}"
+            target="_blank"
+          >
+            ${userUrl}
+          </a>
+
+          <br><br>
+
+          <strong>
+            Marker:
+          </strong>
+
+          <br>
+
+          ${markerUrl}
+
+          <br><br>
+
+          <strong>
+            AR Target:
+          </strong>
+
+          <br>
+
+          ${targetUrl}
 
         </div>
 
@@ -711,11 +1111,9 @@ saveButton.addEventListener(
         routeData
       );
 
-
     }
 
     catch(error) {
-
 
       console.error(
         error
@@ -739,7 +1137,6 @@ saveButton.addEventListener(
     }
 
     finally {
-
 
       saveButton.disabled =
         false;
