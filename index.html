@@ -8,19 +8,13 @@
     content="width=device-width, initial-scale=1.0, viewport-fit=cover"
   >
 
-  <title>Last50 AR</title>
+  <title>Last50 Multi-Step AR</title>
 
-  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- A-Frame -->
   <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-
-  <!-- MindAR -->
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
-
     * {
       box-sizing: border-box;
     }
@@ -44,10 +38,10 @@
     #setupScreen {
       position: fixed;
       inset: 0;
-      overflow-y: auto;
-      padding: 24px;
-      background: #111;
       z-index: 100;
+      padding: 24px;
+      overflow-y: auto;
+      background: #111;
     }
 
     .container {
@@ -57,74 +51,66 @@
 
     h1 {
       text-align: center;
-      margin-bottom: 8px;
     }
 
     .card {
-      margin-top: 24px;
+      margin-top: 20px;
       padding: 20px;
       background: #1d1d1d;
-      border-radius: 16px;
+      border-radius: 15px;
     }
 
     .label {
       color: #aaa;
+      margin-top: 12px;
       font-size: 14px;
-      margin-top: 16px;
     }
 
     .value {
-      font-size: 21px;
       margin-top: 5px;
+      font-size: 21px;
     }
 
     #markerImage {
-      width: 100%;
-      margin-top: 18px;
-      border-radius: 14px;
       display: none;
-    }
-
-    #directionBox {
-      font-size: 60px;
-      text-align: center;
-      margin-top: 20px;
-    }
-
-    #instructionPreview {
-      font-size: 22px;
-      text-align: center;
-      line-height: 1.5;
+      width: 100%;
       margin-top: 15px;
+      border-radius: 12px;
+    }
+
+    #startButton,
+    #nextButton {
+      width: 100%;
+      margin-top: 20px;
+      padding: 17px;
+      border: 0;
+      border-radius: 12px;
+      color: white;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    #startButton {
+      display: none;
+      background: #4CAF50;
+    }
+
+    #nextButton {
+      display: none;
+      background: #2196F3;
     }
 
     #status {
+      margin-top: 25px;
       text-align: center;
-      margin-top: 30px;
-      color: #aaa;
-      line-height: 1.5;
-    }
-
-    .error {
-      color: #ff6666 !important;
     }
 
     .success {
-      color: #66ff80 !important;
+      color: #66ff80;
     }
 
-    #startARButton {
-      display: none;
-      width: 100%;
-      padding: 18px;
-      margin-top: 25px;
-      border: none;
-      border-radius: 12px;
-      background: #4CAF50;
-      color: white;
-      font-size: 21px;
-      font-weight: bold;
-      cursor: pointer;
+    .error {
+      color: #ff6666;
     }
 
     #arContainer {
@@ -133,8 +119,7 @@
       inset: 0;
       width: 100%;
       height: 100%;
-      background: #000;
-      z-index: 1;
+      background: black;
     }
 
     #arContainer a-scene {
@@ -144,68 +129,71 @@
       height: 100% !important;
     }
 
-    .a-canvas {
-      width: 100% !important;
-      height: 100% !important;
-    }
-
-    #arOverlay {
+    #overlay {
       display: none;
       position: fixed;
-      z-index: 1000;
       top: calc(env(safe-area-inset-top) + 15px);
       left: 15px;
       right: 15px;
+      z-index: 1000;
       pointer-events: none;
       text-align: center;
     }
 
-    #arTitle {
+    #overlayBox {
       display: inline-block;
-      padding: 10px 18px;
-      background: rgba(0, 0, 0, 0.65);
-      border-radius: 12px;
-      font-size: 18px;
+      padding: 14px 18px;
+      background: rgba(0, 0, 0, .75);
+      border-radius: 14px;
     }
 
-    #arInstruction {
+    #instructionBox {
       display: none;
-      margin-top: 15px;
-      padding: 16px;
-      background: rgba(0, 0, 0, 0.78);
+      margin-top: 12px;
+      padding: 15px;
+      background: rgba(0, 0, 0, .8);
       border-radius: 14px;
+      color: #66ff80;
       font-size: 22px;
       line-height: 1.4;
-      color: #66ff80;
     }
 
-    #closeAR {
+    #nextButtonAR {
+      display: none;
       position: fixed;
+      bottom: 25px;
+      left: 20px;
+      right: 20px;
       z-index: 2000;
+      padding: 16px;
+      border: 0;
+      border-radius: 12px;
+      background: #2196F3;
+      color: white;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    #closeButton {
+      display: none;
+      position: fixed;
       top: calc(env(safe-area-inset-top) + 12px);
-      left: 15px;
+      left: 14px;
+      z-index: 2000;
       width: 48px;
       height: 48px;
       border: 0;
       border-radius: 50%;
-      background: rgba(0,0,0,.7);
+      background: rgba(0, 0, 0, .7);
       color: white;
       font-size: 28px;
-      display: none;
     }
-
   </style>
 </head>
 
 <body>
 
-
-<!-- ==============================
-     ROUTE / START SCREEN
-============================== -->
-
 <div id="setupScreen">
-
   <div class="container">
 
     <h1>Last50</h1>
@@ -230,19 +218,17 @@
           class="value"
         ></div>
 
-
         <div class="label">
-          נקודת התחלה
+          נקודה נוכחית
         </div>
 
         <div
-          id="markerName"
+          id="stepName"
           class="value"
         ></div>
 
-
         <div class="label">
-          חפש את התמונה / המקום הזה
+          Marker לחיפוש
         </div>
 
         <img
@@ -252,23 +238,31 @@
 
       </div>
 
-
       <div class="card">
 
         <div class="label">
-          הוראת ניווט
+          שלב
         </div>
 
-        <div id="directionBox"></div>
+        <div
+          id="stepCounter"
+          class="value"
+        ></div>
 
-        <div id="instructionPreview"></div>
+        <div class="label">
+          הוראה
+        </div>
+
+        <div
+          id="instructionPreview"
+          class="value"
+        ></div>
 
       </div>
 
-
       <button
         type="button"
-        id="startARButton"
+        id="startButton"
       >
         📷 פתח מצלמת AR
       </button>
@@ -276,43 +270,50 @@
     </div>
 
   </div>
-
 </div>
 
-
-<!-- ==============================
-     AR
-============================== -->
 
 <div id="arContainer"></div>
 
-<button id="closeAR">
-  ×
-</button>
 
-<div id="arOverlay">
+<div id="overlay">
 
-  <div id="arTitle">
-    כוון את המצלמה ל-Marker
+  <div id="overlayBox">
+    מחפש Marker...
   </div>
 
-  <div id="arInstruction"></div>
+  <div id="instructionBox"></div>
 
 </div>
+
+
+<button
+  id="nextButtonAR"
+  type="button"
+>
+  ➡️ עבור לנקודה הבאה
+</button>
+
+
+<button
+  id="closeButton"
+  type="button"
+>
+  ×
+</button>
 
 
 <script>
 
-/* ==============================
-   SUPABASE
-============================== */
+/* ==========================================
+   CONFIG
+========================================== */
 
 const SUPABASE_URL =
   "https://batvowvhsqyvacigmzyv.supabase.co";
 
 const SUPABASE_KEY =
   "sb_publishable_eq-i5YF30iQ03ntmqcg_hA_AJy5NJvK";
-
 
 const supabaseClient =
   supabase.createClient(
@@ -321,86 +322,74 @@ const supabaseClient =
   );
 
 
-/* ==============================
+/* ==========================================
    ELEMENTS
-============================== */
+========================================== */
 
 const setupScreen =
-  document.getElementById(
-    "setupScreen"
-  );
+  document.getElementById("setupScreen");
 
 const status =
-  document.getElementById(
-    "status"
-  );
+  document.getElementById("status");
 
 const routeContent =
-  document.getElementById(
-    "routeContent"
-  );
+  document.getElementById("routeContent");
 
 const routeName =
-  document.getElementById(
-    "routeName"
-  );
+  document.getElementById("routeName");
 
-const markerName =
-  document.getElementById(
-    "markerName"
-  );
+const stepName =
+  document.getElementById("stepName");
 
 const markerImage =
-  document.getElementById(
-    "markerImage"
-  );
+  document.getElementById("markerImage");
 
-const directionBox =
-  document.getElementById(
-    "directionBox"
-  );
+const stepCounter =
+  document.getElementById("stepCounter");
 
 const instructionPreview =
-  document.getElementById(
-    "instructionPreview"
-  );
+  document.getElementById("instructionPreview");
 
-const startARButton =
-  document.getElementById(
-    "startARButton"
-  );
+const startButton =
+  document.getElementById("startButton");
 
 const arContainer =
-  document.getElementById(
-    "arContainer"
-  );
+  document.getElementById("arContainer");
 
-const arOverlay =
-  document.getElementById(
-    "arOverlay"
-  );
+const overlay =
+  document.getElementById("overlay");
 
-const arInstruction =
-  document.getElementById(
-    "arInstruction"
-  );
+const overlayBox =
+  document.getElementById("overlayBox");
 
-const closeAR =
-  document.getElementById(
-    "closeAR"
-  );
+const instructionBox =
+  document.getElementById("instructionBox");
+
+const nextButtonAR =
+  document.getElementById("nextButtonAR");
+
+const closeButton =
+  document.getElementById("closeButton");
 
 
-let currentRoute = null;
+/* ==========================================
+   STATE
+========================================== */
+
+let routeData = null;
+
+let steps = [];
+
+let currentStepIndex = 0;
 
 
-/* ==============================
-   DIRECTION
-============================== */
+/* ==========================================
+   HELPERS
+========================================== */
 
 function directionToSymbol(direction) {
 
-  switch(direction) {
+  switch (direction) {
 
     case "straight":
       return "⬆️";
@@ -423,12 +412,13 @@ function directionToSymbol(direction) {
     default:
       return "⬆️";
   }
+
 }
 
 
 function directionToRotation(direction) {
 
-  switch(direction) {
+  switch (direction) {
 
     case "left":
       return 90;
@@ -436,18 +426,16 @@ function directionToRotation(direction) {
     case "right":
       return -90;
 
-    case "straight":
-      return 0;
-
     default:
       return 0;
   }
+
 }
 
 
-/* ==============================
-   LOAD ROUTE
-============================== */
+/* ==========================================
+   LOAD ROUTE + STEPS
+========================================== */
 
 async function loadRoute() {
 
@@ -456,18 +444,17 @@ async function loadRoute() {
       window.location.search
     );
 
-
-  const id =
+  const routeId =
     params.get("id");
 
 
-  if (!id) {
+  if (!routeId) {
 
     status.className =
       "error";
 
     status.innerText =
-      "❌ לא נמצא Route ID בכתובת";
+      "❌ לא נמצא Route ID";
 
     return;
   }
@@ -476,70 +463,114 @@ async function loadRoute() {
   try {
 
     const {
-      data,
-      error
+      data: route,
+      error: routeError
     } =
       await supabaseClient
         .from("routes")
         .select("*")
-        .eq("id", id)
+        .eq("id", routeId)
         .single();
 
 
-    if (error) {
-      throw error;
+    if (routeError) {
+      throw routeError;
     }
 
 
-    if (!data) {
+    const {
+      data: stepRows,
+      error: stepsError
+    } =
+      await supabaseClient
+        .from("route_steps")
+        .select("*")
+        .eq("route_id", routeId)
+        .order("step_order", {
+          ascending: true
+        });
 
-      throw new Error(
-        "Route not found"
-      );
 
+    if (stepsError) {
+      throw stepsError;
     }
 
 
-    currentRoute =
-      data;
+    routeData =
+      route;
+
+
+    /*
+      Backward compatibility:
+      if no route_steps exist,
+      use the original route marker.
+    */
+
+    if (
+      !stepRows ||
+      stepRows.length === 0
+    ) {
+
+      if (!route.target_url) {
+
+        throw new Error(
+          "אין נקודות AR במסלול"
+        );
+
+      }
+
+
+      steps = [
+        {
+          step_order: 1,
+          marker_name:
+            route.marker_name,
+
+          marker_url:
+            route.marker_url,
+
+          target_url:
+            route.target_url,
+
+          direction:
+            route.direction,
+
+          instruction:
+            route.instruction
+        }
+      ];
+
+    }
+
+    else {
+
+      steps =
+        stepRows.filter(
+          step =>
+            !!step.target_url
+        );
+
+
+      if (steps.length === 0) {
+
+        throw new Error(
+          "לנקודות במסלול אין קבצי AR"
+        );
+
+      }
+
+    }
 
 
     routeName.innerText =
-      data.name || "";
+      route.name || "";
 
 
-    markerName.innerText =
-      data.marker_name || "";
+    currentStepIndex =
+      0;
 
 
-    instructionPreview.innerText =
-      data.instruction || "";
-
-
-    directionBox.innerText =
-      directionToSymbol(
-        data.direction
-      );
-
-
-    if (data.marker_url) {
-
-      markerImage.src =
-        data.marker_url;
-
-      markerImage.style.display =
-        "block";
-
-    }
-
-
-    if (!data.target_url) {
-
-      throw new Error(
-        "למסלול הזה עדיין אין קובץ AR"
-      );
-
-    }
+    showCurrentStep();
 
 
     status.className =
@@ -547,21 +578,15 @@ async function loadRoute() {
 
 
     status.innerText =
-      "✅ המסלול מוכן ל-AR";
+      "✅ המסלול מוכן";
 
 
     routeContent.style.display =
       "block";
 
 
-    startARButton.style.display =
+    startButton.style.display =
       "block";
-
-
-    console.log(
-      "Loaded route:",
-      data
-    );
 
   }
 
@@ -582,7 +607,7 @@ async function loadRoute() {
       (
         error.message
         ||
-        "לא ניתן לטעון את המסלול"
+        "לא ניתן לטעון מסלול"
       );
 
   }
@@ -590,23 +615,77 @@ async function loadRoute() {
 }
 
 
-/* ==============================
-   CREATE AR SCENE
-============================== */
+/* ==========================================
+   SHOW STEP INFO
+========================================== */
+
+function showCurrentStep() {
+
+  const step =
+    steps[currentStepIndex];
+
+
+  stepName.innerText =
+    step.marker_name || "";
+
+
+  stepCounter.innerText =
+    (
+      currentStepIndex + 1
+    )
+    +
+    " מתוך "
+    +
+    steps.length;
+
+
+  instructionPreview.innerText =
+    directionToSymbol(
+      step.direction
+    )
+    +
+    " "
+    +
+    (
+      step.instruction
+      ||
+      ""
+    );
+
+
+  if (step.marker_url) {
+
+    markerImage.src =
+      step.marker_url;
+
+    markerImage.style.display =
+      "block";
+
+  }
+
+  else {
+
+    markerImage.style.display =
+      "none";
+
+  }
+
+}
+
+
+/* ==========================================
+   CREATE AR FOR CURRENT STEP
+========================================== */
 
 function createARScene() {
 
-  const targetUrl =
-    currentRoute.target_url;
-
-
-  const direction =
-    currentRoute.direction;
+  const step =
+    steps[currentStepIndex];
 
 
   const rotation =
     directionToRotation(
-      direction
+      step.direction
     );
 
 
@@ -615,7 +694,7 @@ function createARScene() {
     <a-scene
 
       mindar-image="
-        imageTargetSrc: ${targetUrl};
+        imageTargetSrc: ${step.target_url};
         autoStart: true;
         uiLoading: yes;
         uiScanning: yes;
@@ -644,30 +723,22 @@ function createARScene() {
     >
 
       <a-camera
-
         position="0 0 0"
-
         look-controls="
           enabled: false
         "
-
       ></a-camera>
 
 
       <a-entity
-
         id="markerTarget"
 
         mindar-image-target="
           targetIndex: 0
         "
-
       >
 
-        <!-- AR arrow -->
-
         <a-entity
-
           rotation="
             0 0 ${rotation}
           "
@@ -675,46 +746,21 @@ function createARScene() {
           position="
             0 0 0.15
           "
-
-          scale="
-            1 1 1
-          "
-
         >
 
-          <!-- Arrow body -->
-
           <a-box
-
-            position="
-              0 0.05 0
-            "
-
-            scale="
-              0.14 0.45 0.07
-            "
-
+            position="0 0.05 0"
+            scale="0.14 0.45 0.07"
             color="#00A8FF"
-
           ></a-box>
 
 
-          <!-- Arrow head -->
-
           <a-cone
-
-            position="
-              0 0.42 0
-            "
-
+            position="0 0.42 0"
             radius-bottom="0.23"
-
             radius-top="0"
-
             height="0.32"
-
             color="#00A8FF"
-
           ></a-cone>
 
         </a-entity>
@@ -726,6 +772,26 @@ function createARScene() {
   `;
 
 
+  overlayBox.innerText =
+    "מחפש Marker "
+    +
+    (
+      currentStepIndex + 1
+    )
+    +
+    " מתוך "
+    +
+    steps.length;
+
+
+  instructionBox.style.display =
+    "none";
+
+
+  nextButtonAR.style.display =
+    "none";
+
+
   setTimeout(
     attachTargetEvents,
     500
@@ -734,9 +800,9 @@ function createARScene() {
 }
 
 
-/* ==============================
-   TARGET EVENTS
-============================== */
+/* ==========================================
+   MARKER EVENTS
+========================================== */
 
 function attachTargetEvents() {
 
@@ -761,27 +827,59 @@ function attachTargetEvents() {
     "targetFound",
     function() {
 
-      console.log(
-        "Marker found"
-      );
+      const step =
+        steps[
+          currentStepIndex
+        ];
 
 
-      arInstruction.style.display =
-        "block";
+      overlayBox.innerText =
+        "✅ Marker זוהה";
 
 
-      arInstruction.innerHTML =
+      instructionBox.innerHTML =
         directionToSymbol(
-          currentRoute.direction
+          step.direction
         )
         +
         "<br>"
         +
         (
-          currentRoute.instruction
+          step.instruction
           ||
           ""
         );
+
+
+      instructionBox.style.display =
+        "block";
+
+
+      /*
+        Show next button only if
+        another step exists.
+      */
+
+      if (
+        currentStepIndex
+        <
+        steps.length - 1
+      ) {
+
+        nextButtonAR.style.display =
+          "block";
+
+      }
+
+      else {
+
+        nextButtonAR.innerText =
+          "⭐ הגעת ליעד";
+
+        nextButtonAR.style.display =
+          "block";
+
+      }
 
     }
   );
@@ -791,13 +889,8 @@ function attachTargetEvents() {
     "targetLost",
     function() {
 
-      console.log(
-        "Marker lost"
-      );
-
-
-      arInstruction.style.display =
-        "none";
+      overlayBox.innerText =
+        "Marker אבד";
 
     }
   );
@@ -805,26 +898,13 @@ function attachTargetEvents() {
 }
 
 
-/* ==============================
+/* ==========================================
    START AR
-============================== */
+========================================== */
 
-startARButton.addEventListener(
+startButton.addEventListener(
   "click",
   function() {
-
-    if (
-      !currentRoute ||
-      !currentRoute.target_url
-    ) {
-
-      alert(
-        "אין קובץ AR למסלול"
-      );
-
-      return;
-    }
-
 
     setupScreen.style.display =
       "none";
@@ -834,11 +914,11 @@ startARButton.addEventListener(
       "block";
 
 
-    arOverlay.style.display =
+    overlay.style.display =
       "block";
 
 
-    closeAR.style.display =
+    closeButton.style.display =
       "block";
 
 
@@ -848,18 +928,68 @@ startARButton.addEventListener(
 );
 
 
-/* ==============================
-   CLOSE AR
-============================== */
+/* ==========================================
+   NEXT STEP
+========================================== */
 
-closeAR.addEventListener(
+nextButtonAR.addEventListener(
   "click",
   function() {
 
     /*
-      Easiest clean shutdown of
-      camera + MindAR on mobile.
+      Final step
     */
+
+    if (
+      currentStepIndex
+      >=
+      steps.length - 1
+    ) {
+
+      alert(
+        "⭐ הגעת ליעד"
+      );
+
+      return;
+    }
+
+
+    currentStepIndex++;
+
+
+    /*
+      Easiest and most stable way
+      to stop current camera /
+      MindAR scene and load the
+      next .mind target.
+    */
+
+    const params =
+      new URLSearchParams(
+        window.location.search
+      );
+
+
+    params.set(
+      "step",
+      currentStepIndex
+    );
+
+
+    window.location.search =
+      params.toString();
+
+  }
+);
+
+
+/* ==========================================
+   CLOSE
+========================================== */
+
+closeButton.addEventListener(
+  "click",
+  function() {
 
     window.location.reload();
 
@@ -867,11 +997,52 @@ closeAR.addEventListener(
 );
 
 
-/* ==============================
-   INIT
-============================== */
+/* ==========================================
+   INITIAL STEP FROM URL
+========================================== */
 
-loadRoute();
+async function init() {
+
+  await loadRoute();
+
+
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
+
+
+  const requestedStep =
+    parseInt(
+      params.get("step"),
+      10
+    );
+
+
+  if (
+    !isNaN(requestedStep)
+    &&
+    requestedStep >= 0
+    &&
+    requestedStep < steps.length
+  ) {
+
+    currentStepIndex =
+      requestedStep;
+
+
+    showCurrentStep();
+
+  }
+
+}
+
+
+/* ==========================================
+   GO
+========================================== */
+
+init();
 
 </script>
 
